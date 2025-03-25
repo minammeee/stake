@@ -3,13 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PowerStake - Staking PLP</title>
+    <title>PowerStake - Staking PLP (Sane en PulseChain)</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
+        * {
+            box-sizing: border-box;
+        }
         body {
             font-family: 'Montserrat', Arial, sans-serif;
             margin: 0;
-            padding: 30px;
+            padding: 20px;
             background: linear-gradient(135deg, #0f0f0f 0%, #1a1a1a 100%);
             color: #ffffff;
             min-height: 100vh;
@@ -18,37 +22,37 @@
             max-width: 1000px;
             margin: 0 auto;
             background: #1a1a1a;
-            padding: 30px;
+            padding: 20px;
             border-radius: 15px;
             box-shadow: 0 0 20px rgba(255, 221, 0, 0.4);
         }
         h1 {
             text-align: center;
             color: #ffdd00;
-            margin-bottom: 30px;
+            margin-bottom: 20px;
             font-weight: 700;
-            font-size: 32px;
+            font-size: 28px;
             letter-spacing: 2px;
             text-transform: uppercase;
         }
         h2 {
             color: #ffdd00;
             font-weight: 600;
-            margin-top: 30px;
-            font-size: 22px;
+            margin-top: 20px;
+            font-size: 20px;
             text-transform: uppercase;
         }
         button {
-            padding: 12px 25px;
+            padding: 10px 20px;
             background: #ffdd00;
             color: #000000;
             border: none;
             border-radius: 8px;
             cursor: pointer;
-            margin: 10px;
+            margin: 10px 0;
             transition: all 0.3s ease;
             font-weight: 600;
-            font-size: 16px;
+            font-size: 14px;
         }
         button:hover {
             background: #ffea4d;
@@ -61,49 +65,67 @@
             box-shadow: none;
             transform: none;
         }
+        .input-group {
+            margin: 10px 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        label {
+            font-size: 14px;
+            color: #d0d0d0;
+            margin-bottom: 5px;
+        }
         input {
-            padding: 10px;
-            margin: 10px;
+            padding: 8px;
+            margin: 5px 0;
             border: 2px solid #ffdd00;
             border-radius: 8px;
-            width: 220px;
+            width: 100%;
+            max-width: 220px;
             background: #2a2a2a;
             color: #ffffff;
             outline: none;
             transition: all 0.3s ease;
-            font-size: 16px;
+            font-size: 14px;
         }
         input:focus {
             border-color: #ffea4d;
             box-shadow: 0 0 10px rgba(255, 221, 0, 0.5);
         }
+        input:invalid:not(:placeholder-shown) {
+            border-color: #ff4d4d;
+        }
         .status {
-            margin-top: 20px;
-            padding: 15px;
+            margin-top: 15px;
+            padding: 10px;
             border-radius: 8px;
             background: #151515;
-            font-size: 16px;
+            font-size: 14px;
             text-align: center;
+            border: 1px solid transparent;
         }
         .error {
             color: #ff4d4d;
+            border-color: #ff4d4d;
         }
         .success {
             color: #00cc99;
+            border-color: #00cc99;
         }
         table {
             width: 100%;
             border-collapse: collapse;
-            margin-top: 20px;
+            margin-top: 15px;
             background: #151515;
             border-radius: 8px;
             overflow: hidden;
         }
         th, td {
-            padding: 12px;
+            padding: 10px;
             border: 1px solid #ffdd00;
             text-align: center;
-            font-size: 14px;
+            font-size: 12px;
         }
         th {
             background: #ffdd00;
@@ -115,25 +137,22 @@
         }
         .stake-section {
             background: linear-gradient(135deg, #252525 0%, #1a1a1a 100%);
-            padding: 30px;
+            padding: 20px;
             border-radius: 15px;
-            margin: 30px 0;
+            margin: 20px 0;
             box-shadow: 0 0 20px rgba(255, 221, 0, 0.3);
             text-align: center;
             border: 2px solid #ffdd00;
         }
         .stake-section h2 {
-            margin-bottom: 20px;
-        }
-        .stake-section input {
-            margin: 10px;
+            margin-bottom: 15px;
         }
         .yield-box {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 15px;
-            margin-top: 20px;
-            padding: 20px;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: * 10px;
+            margin-top: 15px;
+            padding: 15px;
             background: #151515;
             border-radius: 10px;
             border: 2px solid #ffdd00;
@@ -141,11 +160,10 @@
         }
         .yield-box div {
             background: #2a2a2a;
-            padding: 20px;
+            padding: 15px;
             border-radius: 8px;
             box-shadow: 0 0 10px rgba(255, 221, 0, 0.4);
             transition: transform 0.3s ease, background 0.3s ease;
-            position: relative;
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -156,8 +174,8 @@
             background: #333;
         }
         .yield-box p {
-            margin: 0 0 10px 0;
-            font-size: 14px;
+            margin: 0 0 8px 0;
+            font-size: 12px;
             color: #d0d0d0;
             display: flex;
             align-items: center;
@@ -165,52 +183,74 @@
         }
         .yield-box span {
             color: #ffdd00;
-            font-size: 20px;
+            font-size: 16px;
             font-weight: 700;
         }
         .yield-box .icon {
-            font-size: 18px;
+            font-size: 16px;
             color: #ffdd00;
         }
         .price-section {
             display: flex;
+            flex-wrap: wrap;
             justify-content: space-between;
             background: #151515;
             padding: 15px;
             border-radius: 8px;
-            margin: 20px 0;
+            margin: 15px 0;
             border: 1px solid #ffdd00;
+            gap: 10px;
         }
         .price-section p {
-            margin: 0;
-            font-size: 16px;
+            margin: 5px 0;
+            font-size: 14px;
         }
         .price-section span {
             color: #ffdd00;
             font-weight: 600;
         }
-        .approval-status {
-            margin: 10px 0;
-            font-size: 14px;
-            color: #ffdd00;
-        }
         .timer {
             color: #00cc99;
-            font-size: 12px;
+            font-size: 10px;
         }
         .no-data {
             text-align: center;
-            padding: 20px;
+            padding: 15px;
             color: #d0d0d0;
             font-style: italic;
+        }
+        @media (max-width: 600px) {
+            .container {
+                padding: 15px;
+            }
+            h1 {
+                font-size: 24px;
+            }
+            h2 {
+                font-size: 18px;
+            }
+            button {
+                padding: 8px 15px;
+                font-size: 12px;
+            }
+            input {
+                max-width: 100%;
+            }
+            th, td {
+                font-size: 10px;
+                padding: 8px;
+            }
+            .yield-box {
+                grid-template-columns: 1fr;
+            }
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>PowerStake - Staking PLP</h1>
+        <h1>PowerStake - Staking PLP (Sane en PulseChain)</h1>
         <div>
-            <button id="connectWallet">Conectar Billetera</button>
+            <button id="connectWallet" aria-label="Conectar billetera para interactuar con la aplicación">Conectar Billetera</button>
             <p>Dirección: <span id="account">No conectado</span></p>
         </div>
         <div class="price-section">
@@ -223,13 +263,23 @@
                 <h2>Saldo PLP</h2>
                 <p>Saldo disponible: <span id="plpBalance">0</span> PLP</p>
             </div>
+            <div>
+                <h2>SPWR (PLP Stakeado)</h2>
+                <p>Tu SPWR: <span id="spwrBalance">0</span> SPWR</p>
+                <p>Total SPWR: <span id="totalSPWR">0</span> SPWR</p>
+            </div>
         </div>
         <div class="stake-section">
             <h2>¡Haz Stake y Gana!</h2>
-            <input type="number" id="stakeAmount" placeholder="Cantidad PLP (ej. 100)" step="0.01">
-            <input type="number" id="stakePeriod" placeholder="Días (ej. 30)" min="30">
-            <button id="stakeButton" disabled>Stake PLP (Aprueba y Stake)</button>
-            <p class="approval-status" id="approvalStatus">Ingresa una cantidad para verificar</p>
+            <div class="input-group">
+                <label for="stakeAmount">Cantidad de PLP a Stakear</label>
+                <input type="number" id="stakeAmount" placeholder="Ej. 100" step="0.01" min="0" required>
+            </div>
+            <div class="input-group">
+                <label for="stakePeriod">Período de Staking (Días, mínimo 30)</label>
+                <input type="number" id="stakePeriod" placeholder="Ej. 30" min="30" required>
+            </div>
+            <button id="stakeButton" disabled aria-label="Realizar staking de PLP">Stake PLP</button>
             <div class="yield-box">
                 <div>
                     <p><i class="fas fa-chart-line icon"></i> APR Anual</p>
@@ -281,31 +331,147 @@
                 <tbody id="generalStakesTable"></tbody>
             </table>
         </div>
-        <div>
-            <h2>Saldo sPWR (Recompensas)</h2>
-            <p>Total disponible: <span id="spwrBalance">0</span> sPWR</p>
-        </div>
         <div class="status" id="status">Estado: Esperando acción...</div>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/web3@1.7.4/dist/web3.min.js"></script>
     <script>
-        const contractAddress = "0x781Bc6F2eB8F9466B26808cA53c159Ee61d6f8fB";
-        const plpAddress = "0xe5c56E4a8F8d96e3A91b18D83b7f0c36663C9a74";
-        const pwrAddress = "0x3Eb3B7b3D95Cb3699295D7868F85e43b56AeeFcB";
+        const contractAddress = "0x781Bc6F2eB8F9466B26808cA53c159Ee61d6f8fB"; // Dirección del contrato PowerStake en PulseChain
+        const plpAddress = "0xe5c56E4a8F8d96e3A91b18D83b7f0c36663C9a74"; // Dirección de PLP en PulseChain
+        const pwrAddress = "0x3Eb3B7b3D95Cb3699295D7868F85e43b56AeeFcB"; // Dirección de PWR en PulseChain
         const APR = 0.5; // 50% anual
-        const DESIRED_NETWORK_ID = 1; // Ethereum Mainnet
+        const DESIRED_NETWORK_ID = 369; // PulseChain
         const APPROVAL_AMOUNT = "1000000"; // 1,000,000 PLP
 
         const powerStakeABI = [
-            {"inputs":[],"stateMutability":"nonpayable","type":"constructor"},
-            {"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"user","type":"address"},{"indexed":false,"internalType":"uint256","name":"amount","type":"uint256"},{"indexed":false,"internalType":"uint256","name":"period","type":"uint256"}],"name":"Staked","type":"event"},
-            {"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"user","type":"address"},{"indexed":false,"internalType":"uint256","name":"amount","type":"uint256"},{"indexed":false,"internalType":"uint256","name":"reward","type":"uint256"}],"name":"Unstaked","type":"event"},
-            {"inputs":[{"internalType":"address","name":"user","type":"address"}],"name":"getSPWRBalance","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},
-            {"inputs":[{"internalType":"address","name":"user","type":"address"}],"name":"getUserStakes","outputs":[{"components":[{"internalType":"uint256","name":"amount","type":"uint256"},{"internalType":"uint256","name":"startTime","type":"uint256"},{"internalType":"uint256","name":"endTime","type":"uint256"},{"internalType":"uint256","name":"rewardDebt","type":"uint256"},{"internalType":"bool","name":"withdrawn","type":"bool"}],"internalType":"struct PowerStake.Stake[]","name":"","type":"tuple[]"}],"stateMutability":"view","type":"function"},
-            {"inputs":[],"name":"getRewardBalance","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},
-            {"inputs":[{"internalType":"uint256","name":"amount","type":"uint256"},{"internalType":"uint256","name":"period","type":"uint256"}],"name":"stake","outputs":[],"stateMutability":"nonpayable","type":"function"},
-            {"inputs":[{"internalType":"uint256","name":"stakeIndex","type":"uint256"}],"name":"unstake","outputs":[],"stateMutability":"nonpayable","type":"function"}
+            {
+                "inputs": [
+                    {"internalType": "address", "name": "_plpToken", "type": "address"},
+                    {"internalType": "address", "name": "_pwrToken", "type": "address"}
+                ],
+                "stateMutability": "nonpayable",
+                "type": "constructor"
+            },
+            {
+                "anonymous": false,
+                "inputs": [
+                    {"indexed": true, "internalType": "address", "name": "user", "type": "address"},
+                    {"indexed": false, "internalType": "uint256", "name": "amount", "type": "uint256"},
+                    {"indexed": false, "internalType": "uint256", "name": "period", "type": "uint256"}
+                ],
+                "name": "Staked",
+                "type": "event"
+            },
+            {
+                "anonymous": false,
+                "inputs": [
+                    {"indexed": true, "internalType": "address", "name": "user", "type": "address"},
+                    {"indexed": false, "internalType": "uint256", "name": "amount", "type": "uint256"},
+                    {"indexed": false, "internalType": "uint256", "name": "reward", "type": "uint256"}
+                ],
+                "name": "Unstaked",
+                "type": "event"
+            },
+            {
+                "inputs": [],
+                "name": "getRewardBalance",
+                "outputs": [{"internalType": "uint256", "name": "", "type": "uint256"}],
+                "stateMutability": "view",
+                "type": "function"
+            },
+            {
+                "inputs": [{"internalType": "address", "name": "user", "type": "address"}],
+                "name": "getUserStakes",
+                "outputs": [
+                    {
+                        "components": [
+                            {"internalType": "uint256", "name": "amount", "type": "uint256"},
+                            {"internalType": "uint256", "name": "startTime", "type": "uint256"},
+                            {"internalType": "uint256", "name": "endTime", "type": "uint256"},
+                            {"internalType": "uint256", "name": "rewardDebt", "type": "uint256"},
+                            {"internalType": "bool", "name": "withdrawn", "type": "bool"}
+                        ],
+                        "internalType": "struct PowerStake.Stake[]",
+                        "name": "",
+                        "type": "tuple[]"
+                    }
+                ],
+                "stateMutability": "view",
+                "type": "function"
+            },
+            {
+                "inputs": [],
+                "name": "owner",
+                "outputs": [{"internalType": "address", "name": "", "type": "address"}],
+                "stateMutability": "view",
+                "type": "function"
+            },
+            {
+                "inputs": [],
+                "name": "plpToken",
+                "outputs": [{"internalType": "contract IERC20", "name": "", "type": "address"}],
+                "stateMutability": "view",
+                "type": "function"
+            },
+            {
+                "inputs": [],
+                "name": "pwrToken",
+                "outputs": [{"internalType": "contract IERC20", "name": "", "type": "address"}],
+                "stateMutability": "view",
+                "type": "function"
+            },
+            {
+                "inputs": [],
+                "name": "rewardRate",
+                "outputs": [{"internalType": "uint256", "name": "", "type": "uint256"}],
+                "stateMutability": "view",
+                "type": "function"
+            },
+            {
+                "inputs": [
+                    {"internalType": "uint256", "name": "amount", "type": "uint256"},
+                    {"internalType": "uint256", "name": "period", "type": "uint256"}
+                ],
+                "name": "stake",
+                "outputs": [],
+                "stateMutability": "nonpayable",
+                "type": "function"
+            },
+            {
+                "inputs": [],
+                "name": "totalPLPStaked",
+                "outputs": [{"internalType": "uint256", "name": "", "type": "uint256"}],
+                "stateMutability": "view",
+                "type": "function"
+            },
+            {
+                "inputs": [],
+                "name": "totalRewardsDistributed",
+                "outputs": [{"internalType": "uint256", "name": "", "type": "uint256"}],
+                "stateMutability": "view",
+                "type": "function"
+            },
+            {
+                "inputs": [],
+                "name": "totalSPWR",
+                "outputs": [{"internalType": "uint256", "name": "", "type": "uint256"}],
+                "stateMutability": "view",
+                "type": "function"
+            },
+            {
+                "inputs": [{"internalType": "address", "name": "user", "type": "address"}],
+                "name": "spwrBalanceOf",
+                "outputs": [{"internalType": "uint256", "name": "", "type": "uint256"}],
+                "stateMutability": "view",
+                "type": "function"
+            },
+            {
+                "inputs": [{"internalType": "uint256", "name": "stakeIndex", "type": "uint256"}],
+                "name": "unstake",
+                "outputs": [],
+                "stateMutability": "nonpayable",
+                "type": "function"
+            }
         ];
 
         const erc20ABI = [
@@ -317,7 +483,6 @@
         let web3, account, contract, plpContract, pwrPriceUsd = 0;
 
         async function init() {
-            // Verificar si MetaMask está instalado
             if (typeof window.ethereum === 'undefined') {
                 updateStatus("Por favor instala MetaMask para continuar. Descárgalo en https://metamask.io", true);
                 console.error("MetaMask no está instalado");
@@ -331,29 +496,49 @@
                 plpContract = new web3.eth.Contract(erc20ABI, plpAddress);
                 console.log("Web3 inicializado correctamente");
 
-                // Verificar la red
                 const networkId = await web3.eth.net.getId();
                 console.log("Red actual:", networkId);
                 if (networkId !== DESIRED_NETWORK_ID) {
-                    console.log("Intentando cambiar a Ethereum Mainnet...");
+                    console.log("Intentando cambiar a PulseChain...");
                     try {
                         await window.ethereum.request({
                             method: 'wallet_switchEthereumChain',
                             params: [{ chainId: web3.utils.toHex(DESIRED_NETWORK_ID) }],
                         });
-                        console.log("Red cambiada a Ethereum Mainnet");
+                        console.log("Red cambiada a PulseChain");
                     } catch (switchError) {
                         console.error("Error al cambiar de red:", switchError);
                         if (switchError.code === 4902) {
-                            updateStatus("La red Ethereum Mainnet no está en MetaMask. Por favor agrégala manualmente.", true);
+                            try {
+                                await window.ethereum.request({
+                                    method: 'wallet_addEthereumChain',
+                                    params: [
+                                        {
+                                            chainId: web3.utils.toHex(DESIRED_NETWORK_ID),
+                                            chainName: 'PulseChain',
+                                            nativeCurrency: {
+                                                name: 'Pulse',
+                                                symbol: 'PLS',
+                                                decimals: 18
+                                            },
+                                            rpcUrls: ['https://rpc.pulsechain.com'],
+                                            blockExplorerUrls: ['https://scan.pulsechain.com']
+                                        }
+                                    ]
+                                });
+                                console.log("PulseChain añadida y cambiada");
+                            } catch (addError) {
+                                console.error("Error al añadir PulseChain:", addError);
+                                updateStatus("No se pudo añadir PulseChain. Por favor agrégala manualmente.", true);
+                                return;
+                            }
                         } else {
-                            updateStatus(`Error al cambiar a Ethereum Mainnet: ${switchError.message}`, true);
+                            updateStatus(`Error al cambiar a PulseChain: ${switchError.message}`, true);
+                            return;
                         }
-                        return;
                     }
                 }
 
-                // Escuchar cambios de cuenta
                 window.ethereum.on('accountsChanged', async (accounts) => {
                     console.log("Cambio de cuenta detectado:", accounts);
                     if (accounts.length === 0) {
@@ -361,26 +546,24 @@
                         document.getElementById('account').innerText = "No conectado";
                         updateStatus("Billetera desconectada", true);
                         document.getElementById('stakeButton').disabled = true;
-                        document.getElementById('approvalStatus').innerText = "Conecta tu billetera para continuar";
                     } else {
                         account = accounts[0];
                         document.getElementById('account').innerText = account;
                         updateStatus("Cuenta cambiada: " + account.slice(0, 6) + "...");
                         await updatePLPBalance();
-                        await updateStakesTable();
                         await updateSPWRBalance();
-                        await checkAllowance();
+                        await updateStakesTable();
+                        await updateTokenPrices();
                     }
                 });
 
-                // Escuchar cambios de red
                 window.ethereum.on('chainChanged', () => {
                     console.log("Cambio de red detectado, recargando página...");
                     window.location.reload();
                 });
 
-                // Cargar precios y stakes generales
                 await updateTokenPrices();
+                await updateTotalSPWR();
                 await updateGeneralStakesTable();
             } catch (error) {
                 console.error("Error durante la inicialización:", error);
@@ -443,7 +626,6 @@
                     return;
                 }
 
-                // Solicitar conexión a MetaMask
                 const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
                 if (accounts.length === 0) {
                     updateStatus("No se seleccionó ninguna cuenta. Por favor selecciona una cuenta en MetaMask.", true);
@@ -456,11 +638,11 @@
                 updateStatus("Billetera conectada: " + account.slice(0, 6) + "...");
                 console.log("Billetera conectada:", account);
 
-                // Actualizar datos después de conectar
                 await updatePLPBalance();
-                await updateStakesTable();
                 await updateSPWRBalance();
-                await checkAllowance();
+                await updateStakesTable();
+                await updateTokenPrices();
+                updateStakeButtonState();
             } catch (error) {
                 console.error("Error al conectar la billetera:", error);
                 if (error.code === 4001) {
@@ -473,12 +655,15 @@
             }
         });
 
-        document.getElementById('stakeAmount').addEventListener('input', async () => {
+        document.getElementById('stakeAmount').addEventListener('input', () => {
             updateYieldEstimate();
-            await checkAllowance();
+            updateStakeButtonState();
         });
 
-        document.getElementById('stakePeriod').addEventListener('input', updateYieldEstimate);
+        document.getElementById('stakePeriod').addEventListener('input', () => {
+            updateYieldEstimate();
+            updateStakeButtonState();
+        });
 
         document.getElementById('stakeButton').addEventListener('click', async () => {
             try {
@@ -504,10 +689,11 @@
                 const gasPrice = await web3.eth.getGasPrice();
                 const gasPriceIncreased = web3.utils.toBN(gasPrice).mul(web3.utils.toBN(120)).div(web3.utils.toBN(100));
 
+                // Verificar y realizar la aprobación si es necesario
                 const allowanceWei = await plpContract.methods.allowance(account, contractAddress).call();
                 const allowance = web3.utils.fromWei(allowanceWei, 'ether');
                 if (parseFloat(allowance) < parseFloat(amount)) {
-                    updateStatus("Aprobando 1,000,000 PLP...");
+                    updateStatus("Aprobando PLP...");
                     const approvalAmountWei = web3.utils.toWei(APPROVAL_AMOUNT, 'ether');
                     const approvalGas = await plpContract.methods.approve(contractAddress, approvalAmountWei).estimateGas({ from: account });
                     const approvalTx = await plpContract.methods.approve(contractAddress, approvalAmountWei).send({
@@ -518,6 +704,7 @@
                     updateStatus(`Aprobación completada (Tx: ${approvalTx.transactionHash.slice(0, 6)}...), realizando stake...`);
                 }
 
+                // Realizar el staking
                 const amountWei = web3.utils.toWei(amount, 'ether');
                 const periodSeconds = period * 24 * 60 * 60;
                 const stakeGas = await contract.methods.stake(amountWei, periodSeconds).estimateGas({ from: account });
@@ -528,34 +715,28 @@
                 });
                 updateStatus(`Stake realizado con éxito (Tx: ${stakeTx.transactionHash.slice(0, 6)}...)`);
                 await updatePLPBalance();
-                await updateStakesTable();
                 await updateSPWRBalance();
+                await updateTotalSPWR();
+                await updateStakesTable();
                 await updateGeneralStakesTable();
                 await updateTokenPrices();
-                await checkAllowance();
+                updateStakeButtonState();
             } catch (error) {
                 console.error("Error al stakear:", error);
                 updateStatus("Error al stakear: " + (error.message || "Transacción fallida"), true);
             }
         });
 
-        async function checkAllowance() {
+        function updateStakeButtonState() {
             if (!account) {
                 document.getElementById('stakeButton').disabled = true;
-                document.getElementById('approvalStatus').innerText = "Conecta tu billetera para continuar";
                 return;
             }
 
             const amount = document.getElementById('stakeAmount').value || 0;
-            const allowanceWei = await plpContract.methods.allowance(account, contractAddress).call();
-            const allowance = web3.utils.fromWei(allowanceWei, 'ether');
-            const isDisabled = amount <= 0;
+            const period = document.getElementById('stakePeriod').value || 0;
+            const isDisabled = amount <= 0 || period < 30;
             document.getElementById('stakeButton').disabled = isDisabled;
-            document.getElementById('approvalStatus').innerText = isDisabled
-                ? "Ingresa una cantidad válida para stakear"
-                : parseFloat(allowance) < parseFloat(amount)
-                    ? `Se aprobarán ${APPROVAL_AMOUNT} PLP antes de stakear`
-                    : `Listo para stakear ${parseFloat(amount).toFixed(2)} PLP`;
         }
 
         async function updatePLPBalance() {
@@ -567,6 +748,34 @@
             } catch (error) {
                 console.error("Error updating PLP balance:", error);
                 updateStatus("Error al cargar saldo PLP", true);
+            }
+        }
+
+        async function updateSPWRBalance() {
+            if (!account) {
+                document.getElementById('spwrBalance').innerText = "0";
+                return;
+            }
+            try {
+                const spwrBalanceWei = await contract.methods.spwrBalanceOf(account).call();
+                const spwrBalance = web3.utils.fromWei(spwrBalanceWei, 'ether');
+                document.getElementById('spwrBalance').innerText = parseFloat(spwrBalance).toFixed(4);
+            } catch (error) {
+                console.error("Error updating SPWR balance:", error);
+                document.getElementById('spwrBalance').innerText = "Error";
+                updateStatus("Error al cargar saldo SPWR: " + error.message, true);
+            }
+        }
+
+        async function updateTotalSPWR() {
+            try {
+                const totalSPWRWei = await contract.methods.totalSPWR().call();
+                const totalSPWR = web3.utils.fromWei(totalSPWRWei, 'ether');
+                document.getElementById('totalSPWR').innerText = parseFloat(totalSPWR).toFixed(4);
+            } catch (error) {
+                console.error("Error updating total SPWR:", error);
+                document.getElementById('totalSPWR').innerText = "Error";
+                updateStatus("Error al cargar total SPWR: " + error.message, true);
             }
         }
 
@@ -616,7 +825,7 @@
                         <td><span class="timer" id="timer-${index}">${formatTimeRemaining(timeRemaining)}</span></td>
                         <td>50%</td>
                         <td>${reward} PWR</td>
-                        <td><button onclick="unstake(${index})">Unstake</button></td>
+                        <td><button onclick="unstake(${index})" aria-label="Retirar stake ${index}">Unstake</button></td>
                     `;
                     tbody.appendChild(row);
 
@@ -696,26 +905,15 @@
                     gas: Math.floor(unstakeGas * 1.2),
                     gasPrice: gasPriceIncreased
                 });
-                updateStatus(`Unstake realizado con éxito (Tx: ${unstakeTx.transactionHash.slice(0, 6)}...)`);
+                updateStatus(`Unstake realizado con éxito (Tx: ${unstakeTx.transactionHash.slice(0, 6)}...). SPWR quemados.`);
                 await updatePLPBalance();
-                await updateStakesTable();
                 await updateSPWRBalance();
+                await updateTotalSPWR();
+                await updateStakesTable();
                 await updateTokenPrices();
             } catch (error) {
                 console.error("Error al unstakear:", error);
                 updateStatus("Error al unstakear: " + (error.message || "Transacción fallida"), true);
-            }
-        }
-
-        async function updateSPWRBalance() {
-            if (!account) return;
-            try {
-                const balanceWei = await contract.methods.getSPWRBalance(account).call();
-                const balance = web3.utils.fromWei(balanceWei, 'ether');
-                document.getElementById('spwrBalance').innerText = parseFloat(balance).toFixed(4);
-            } catch (error) {
-                console.error("Error updating sPWR balance:", error);
-                updateStatus("Error al cargar saldo sPWR", true);
             }
         }
 
