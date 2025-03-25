@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -29,7 +29,7 @@
         h1 {
             text-align: center;
             color: #ffdd00;
-            margin-bottom: 20px;
+            margin-bottom: 10px;
             font-weight: 700;
             font-size: 28px;
             letter-spacing: 2px;
@@ -219,6 +219,17 @@
             color: #d0d0d0;
             font-style: italic;
         }
+        .button-group {
+            display: flex;
+            justify-content: center; /* Center the buttons */
+            align-items: center;
+            gap: 15px; /* Add spacing between buttons */
+            margin-bottom: 20px;
+        }
+        .chart-btn {
+            padding: 8px 15px;
+            font-size: 12px;
+        }
         @media (max-width: 600px) {
             .container {
                 padding: 15px;
@@ -243,105 +254,118 @@
             .yield-box {
                 grid-template-columns: 1fr;
             }
+            .button-group {
+                flex-direction: column;
+                gap: 10px;
+            }
+            .chart-btn {
+                padding: 6px 12px;
+                font-size: 10px;
+            }
         }
     </style>
 </head>
 <body>
     <div class="container">
         <h1>PowerStake</h1>
+        <!-- Button Group for Connect Wallet, Chart, and Add Liquidity -->
+        <div class="button-group">
+            <button id="connectWallet" aria-label="Connect your wallet to interact with the application">Connect Wallet</button>
+            <button class="chart-btn" onclick="window.open('https://dexscreener.com/pulsechain/0xe5c56e4a8f8d96e3a91b18d83b7f0c36663c9a74', '_blank')" aria-label="View PLP chart on DexScreener">View PLP Chart</button>
+            <button onclick="window.open('https://pulsex.mypinata.cloud/ipfs/bafybeiesh56oijasgr7creubue6xt5anivxifrwd5a5argiz4orbed57qi/#/add/V2/PLS/0x3Eb3B7b3D95Cb3699295D7868F85e43b56AeeFcB', '_blank')" aria-label="Add liquidity to PLP/PLS pair on PulseX">Add Liquidity PLP</button>
+        </div>
         <div>
-            <button id="connectWallet" aria-label="Conectar billetera para interactuar con la aplicación">Conectar Billetera</button>
-            <p>Dirección: <span id="account">No conectado</span></p>
+            <p>Address: <span id="account">Not connected</span></p>
         </div>
         <div class="price-section">
             <div>
-                <h2>Precios de Tokens</h2>
-                <p>Precio PLP: $<span id="plpPrice">Cargando...</span></p>
-                <p>Precio PWR: $<span id="pwrPrice">Cargando...</span></p>
+                <h2>Token Prices</h2>
+                <p>PLP Price: $<span id="plpPrice">Loading...</span></p>
+                <p>PWR Price: $<span id="pwrPrice">Loading...</span></p>
             </div>
             <div>
-                <h2>Saldo PLP</h2>
-                <p>Saldo disponible: <span id="plpBalance">0</span> PLP</p>
+                <h2>PLP Balance</h2>
+                <p>Available Balance: <span id="plpBalance">0</span> PLP</p>
             </div>
             <div>
-                <h2>SPWR (PLP Stakeado)</h2>
-                <p>Tu SPWR: <span id="spwrBalance">0</span> SPWR</p>
+                <h2>SPWR (Staked PLP)</h2>
+                <p>Your SPWR: <span id="spwrBalance">0</span> SPWR</p>
                 <p>Total SPWR: <span id="totalSPWR">0</span> SPWR</p>
             </div>
         </div>
         <div class="stake-section">
-            <h2>¡Haz Stake y Gana!</h2>
+            <h2>Stake and Earn!</h2>
             <div class="input-group">
-                <label for="stakeAmount">Cantidad de PLP a Stakear</label>
-                <input type="number" id="stakeAmount" placeholder="Ej. 100" step="0.01" min="0" required>
+                <label for="stakeAmount">Amount of PLP to Stake</label>
+                <input type="number" id="stakeAmount" placeholder="E.g. 100" step="0.01" min="0" required>
             </div>
             <div class="input-group">
-                <label for="stakePeriod">Período de Staking (Días, mínimo 30)</label>
-                <input type="number" id="stakePeriod" placeholder="Ej. 30" min="30" required>
+                <label for="stakePeriod">Staking Period (Days, minimum 30)</label>
+                <input type="number" id="stakePeriod" placeholder="E.g. 30" min="30" required>
             </div>
-            <button id="stakeButton" disabled aria-label="Realizar staking de PLP">Stake PLP</button>
+            <button id="stakeButton" disabled aria-label="Stake PLP tokens">Stake PLP</button>
             <div class="yield-box">
                 <div>
-                    <p><i class="fas fa-chart-line icon"></i> APR Anual</p>
+                    <p><i class="fas fa-chart-line icon"></i> Annual APR</p>
                     <span id="aprYield">50%</span>
                 </div>
                 <div>
-                    <p><i class="fas fa-percentage icon"></i> Rendimiento Total</p>
+                    <p><i class="fas fa-percentage icon"></i> Total Yield</p>
                     <span id="totalYield">0%</span>
                 </div>
                 <div>
-                    <p><i class="fas fa-coins icon"></i> Ganancia (PWR)</p>
+                    <p><i class="fas fa-coins icon"></i> Profit (PWR)</p>
                     <span id="rewardEstimate">0 PWR</span>
                 </div>
                 <div>
-                    <p><i class="fas fa-dollar-sign icon"></i> Ganancia (USD)</p>
+                    <p><i class="fas fa-dollar-sign icon"></i> Profit (USD)</p>
                     <span id="rewardUsdEstimate">$0</span>
                 </div>
             </div>
         </div>
         <div>
-            <h2>Stakes Activos (Usuario)</h2>
+            <h2>Active Stakes (User)</h2>
             <table>
                 <thead>
                     <tr>
-                        <th>Índice</th>
-                        <th>Cantidad</th>
-                        <th>Inicio</th>
-                        <th>Fin</th>
-                        <th>Tiempo Restante</th>
+                        <th>Index</th>
+                        <th>Amount</th>
+                        <th>Start</th>
+                        <th>End</th>
+                        <th>Time Remaining</th>
                         <th>APR</th>
-                        <th>Ganancia Estimada</th>
-                        <th>Acción</th>
+                        <th>Estimated Profit</th>
+                        <th>Action</th>
                     </tr>
                 </thead>
                 <tbody id="stakesTable"></tbody>
             </table>
         </div>
         <div>
-            <h2>Stakes Generales (Todos los Usuarios)</h2>
+            <h2>General Stakes (All Users)</h2>
             <table>
                 <thead>
                     <tr>
-                        <th>Usuario</th>
-                        <th>Cantidad</th>
-                        <th>Duración (Días)</th>
-                        <th>Fecha de Stake</th>
+                        <th>User</th>
+                        <th>Amount</th>
+                        <th>Duration (Days)</th>
+                        <th>Stake Date</th>
                     </tr>
                 </thead>
                 <tbody id="generalStakesTable"></tbody>
             </table>
         </div>
-        <div class="status" id="status">Estado: Esperando acción...</div>
+        <div class="status" id="status">Status: Waiting for action...</div>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/web3@1.7.4/dist/web3.min.js"></script>
     <script>
-        const contractAddress = "0x781Bc6F2eB8F9466B26808cA53c159Ee61d6f8fB"; // Dirección del contrato PowerStake en PulseChain
-        const plpAddress = "0xe5c56E4a8F8d96e3A91b18D83b7f0c36663C9a74"; // Dirección de PLP en PulseChain
-        const pwrAddress = "0x3Eb3B7b3D95Cb3699295D7868F85e43b56AeeFcB"; // Dirección de PWR en PulseChain
-        const APR = 0.5; // 50% anual
+        const contractAddress = "0x781Bc6F2eB8F9466B26808cA53c159Ee61d6f8fB"; // PowerStake contract address on PulseChain
+        const plpAddress = "0xe5c56E4a8F8d96e3A91b18D83b7f0c36663C9a74"; // PLP address on PulseChain
+        const pwrAddress = "0x3Eb3B7b3D95Cb3699295D7868F85e43b56AeeFcB"; // PWR address on PulseChain
+        const APR = 0.5; // 50% annual
         const DESIRED_NETWORK_ID = 369; // PulseChain
-        const APPROVAL_AMOUNT = "1000000"; // 1,000,000 PLP
+        const APPROVAL_AMOUNT = "1000000000000000000000000"; // Max approval (1M PLP in Wei)
 
         const powerStakeABI = [
             {
@@ -484,30 +508,30 @@
 
         async function init() {
             if (typeof window.ethereum === 'undefined') {
-                updateStatus("Por favor instala MetaMask para continuar. Descárgalo en https://metamask.io", true);
-                console.error("MetaMask no está instalado");
+                updateStatus("Please install MetaMask to continue. Download it at https://metamask.io", true);
+                console.error("MetaMask is not installed");
                 return;
             }
 
             try {
-                console.log("Inicializando Web3...");
+                console.log("Initializing Web3...");
                 web3 = new Web3(window.ethereum);
                 contract = new web3.eth.Contract(powerStakeABI, contractAddress);
                 plpContract = new web3.eth.Contract(erc20ABI, plpAddress);
-                console.log("Web3 inicializado correctamente");
+                console.log("Web3 initialized successfully");
 
                 const networkId = await web3.eth.net.getId();
-                console.log("Red actual:", networkId);
+                console.log("Current network:", networkId);
                 if (networkId !== DESIRED_NETWORK_ID) {
-                    console.log("Intentando cambiar a PulseChain...");
+                    console.log("Attempting to switch to PulseChain...");
                     try {
                         await window.ethereum.request({
                             method: 'wallet_switchEthereumChain',
                             params: [{ chainId: web3.utils.toHex(DESIRED_NETWORK_ID) }],
                         });
-                        console.log("Red cambiada a PulseChain");
+                        console.log("Switched to PulseChain");
                     } catch (switchError) {
-                        console.error("Error al cambiar de red:", switchError);
+                        console.error("Error switching network:", switchError);
                         if (switchError.code === 4902) {
                             try {
                                 await window.ethereum.request({
@@ -526,39 +550,40 @@
                                         }
                                     ]
                                 });
-                                console.log("PulseChain añadida y cambiada");
+                                console.log("PulseChain added and switched");
                             } catch (addError) {
-                                console.error("Error al añadir PulseChain:", addError);
-                                updateStatus("No se pudo añadir PulseChain. Por favor agrégala manualmente.", true);
+                                console.error("Error adding PulseChain:", addError);
+                                updateStatus("Could not add PulseChain. Please add it manually.", true);
                                 return;
                             }
                         } else {
-                            updateStatus(`Error al cambiar a PulseChain: ${switchError.message}`, true);
+                            updateStatus(`Error switching to PulseChain: ${switchError.message}`, true);
                             return;
                         }
                     }
                 }
 
                 window.ethereum.on('accountsChanged', async (accounts) => {
-                    console.log("Cambio de cuenta detectado:", accounts);
+                    console.log("Account change detected:", accounts);
                     if (accounts.length === 0) {
                         account = null;
-                        document.getElementById('account').innerText = "No conectado";
-                        updateStatus("Billetera desconectada", true);
+                        document.getElementById('account').innerText = "Not connected";
+                        updateStatus("Wallet disconnected", true);
                         document.getElementById('stakeButton').disabled = true;
                     } else {
                         account = accounts[0];
                         document.getElementById('account').innerText = account;
-                        updateStatus("Cuenta cambiada: " + account.slice(0, 6) + "...");
+                        updateStatus("Account changed: " + account.slice(0, 6) + "...");
                         await updatePLPBalance();
                         await updateSPWRBalance();
                         await updateStakesTable();
                         await updateTokenPrices();
+                        updateStakeButtonState();
                     }
                 });
 
                 window.ethereum.on('chainChanged', () => {
-                    console.log("Cambio de red detectado, recargando página...");
+                    console.log("Network change detected, reloading page...");
                     window.location.reload();
                 });
 
@@ -566,77 +591,77 @@
                 await updateTotalSPWR();
                 await updateGeneralStakesTable();
             } catch (error) {
-                console.error("Error durante la inicialización:", error);
-                updateStatus("Error al inicializar la aplicación: " + (error.message || "Desconocido"), true);
+                console.error("Error during initialization:", error);
+                updateStatus("Error initializing the application: " + (error.message || "Unknown"), true);
             }
         }
 
         async function updateTokenPrices() {
             try {
                 const plpResponse = await fetch(`https://api.dexscreener.com/latest/dex/tokens/${plpAddress}`);
-                if (!plpResponse.ok) throw new Error("Error al obtener el precio de PLP");
+                if (!plpResponse.ok) throw new Error("Error fetching PLP price");
                 const plpData = await plpResponse.json();
-                let plpPrice = "No disponible";
+                let plpPrice = "Not available";
                 if (plpData.pairs && plpData.pairs.length > 0) {
                     plpPrice = parseFloat(plpData.pairs[0].priceUsd).toFixed(4);
                 } else {
                     plpPrice = "0.10";
-                    updateStatus("Precio de PLP no disponible en DexScreener, usando valor estático", true);
+                    updateStatus("PLP price not available on DexScreener, using static value", true);
                 }
                 document.getElementById('plpPrice').innerText = plpPrice;
 
                 try {
                     const pwrResponse = await fetch(`https://api.dexscreener.com/latest/dex/tokens/${pwrAddress}`);
-                    if (!pwrResponse.ok) throw new Error("Error al obtener el precio de PWR");
+                    if (!pwrResponse.ok) throw new Error("Error fetching PWR price");
                     const pwrData = await pwrResponse.json();
-                    let pwrPrice = "No disponible";
+                    let pwrPrice = "Not available";
                     if (pwrData.pairs && pwrData.pairs.length > 0) {
                         pwrPrice = parseFloat(pwrData.pairs[0].priceUsd).toFixed(4);
                         pwrPriceUsd = parseFloat(pwrData.pairs[0].priceUsd);
                     } else {
                         pwrPrice = "0.05";
                         pwrPriceUsd = 0.05;
-                        updateStatus("Precio de PWR no disponible en DexScreener, usando valor estático", true);
+                        updateStatus("PWR price not available on DexScreener, using static value", true);
                     }
                     document.getElementById('pwrPrice').innerText = pwrPrice;
                 } catch (error) {
-                    console.error("Error al obtener precio de PWR:", error);
+                    console.error("Error fetching PWR price:", error);
                     document.getElementById('pwrPrice').innerText = "0.05";
                     pwrPriceUsd = 0.05;
-                    updateStatus("Error al cargar precio de PWR, usando valor estático: " + error.message, true);
+                    updateStatus("Error loading PWR price, using static value: " + error.message, true);
                 }
 
                 updateYieldEstimate();
             } catch (error) {
-                console.error("Error al obtener precios de DexScreener:", error);
+                console.error("Error fetching prices from DexScreener:", error);
                 document.getElementById('plpPrice').innerText = "0.10";
                 document.getElementById('pwrPrice').innerText = "0.05";
                 pwrPriceUsd = 0.05;
-                updateStatus("Error al cargar precios de DexScreener, usando valores estáticos: " + error.message, true);
+                updateStatus("Error loading prices from DexScreener, using static values: " + error.message, true);
                 updateYieldEstimate();
             }
         }
 
         document.getElementById('connectWallet').addEventListener('click', async () => {
             try {
-                console.log("Intentando conectar billetera...");
+                console.log("Attempting to connect wallet...");
                 if (!window.ethereum) {
-                    updateStatus("MetaMask no está instalado. Por favor instálalo desde https://metamask.io", true);
-                    console.error("MetaMask no está instalado");
+                    updateStatus("MetaMask is not installed. Please install it from https://metamask.io", true);
+                    console.error("MetaMask is not installed");
                     return;
                 }
 
                 const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
                 if (accounts.length === 0) {
-                    updateStatus("No se seleccionó ninguna cuenta. Por favor selecciona una cuenta en MetaMask.", true);
-                    console.error("No se seleccionó ninguna cuenta");
+                    updateStatus("No account selected. Please select an account in MetaMask.", true);
+                    console.error("No account selected");
                     return;
                 }
 
                 account = accounts[0];
                 document.getElementById('account').innerText = account;
-                updateStatus("Billetera conectada: " + account.slice(0, 6) + "...");
-                console.log("Billetera conectada:", account);
+                updateStatus("Wallet connected: " + account.slice(0, 6) + "...");
+                console.log("Wallet connected:", account);
 
                 await updatePLPBalance();
                 await updateSPWRBalance();
@@ -644,13 +669,13 @@
                 await updateTokenPrices();
                 updateStakeButtonState();
             } catch (error) {
-                console.error("Error al conectar la billetera:", error);
+                console.error("Error connecting wallet:", error);
                 if (error.code === 4001) {
-                    updateStatus("Conexión rechazada por el usuario. Por favor acepta la conexión en MetaMask.", true);
+                    updateStatus("Connection rejected by user. Please accept the connection in MetaMask.", true);
                 } else if (error.code === -32002) {
-                    updateStatus("Ya hay una solicitud pendiente en MetaMask. Por favor revisa la extensión.", true);
+                    updateStatus("A request is already pending in MetaMask. Please check the extension.", true);
                 } else {
-                    updateStatus("Error al conectar la billetera: " + (error.message || "Desconocido"), true);
+                    updateStatus("Error connecting wallet: " + (error.message || "Unknown"), true);
                 }
             }
         });
@@ -668,44 +693,42 @@
         document.getElementById('stakeButton').addEventListener('click', async () => {
             try {
                 if (!account) {
-                    updateStatus("Por favor conecta tu billetera", true);
+                    updateStatus("Please connect your wallet", true);
                     return;
                 }
 
                 const amount = document.getElementById('stakeAmount').value;
                 const period = document.getElementById('stakePeriod').value;
                 if (!amount || !period || amount <= 0 || period < 30) {
-                    updateStatus("Completa los campos con valores válidos (mínimo 30 días)", true);
+                    updateStatus("Please fill in the fields with valid values (minimum 30 days)", true);
                     return;
                 }
 
                 const balanceWei = await plpContract.methods.balanceOf(account).call();
                 const balance = web3.utils.fromWei(balanceWei, 'ether');
                 if (parseFloat(balance) < parseFloat(amount)) {
-                    updateStatus("Saldo insuficiente de PLP", true);
+                    updateStatus("Insufficient PLP balance", true);
                     return;
                 }
 
+                const amountWei = web3.utils.toWei(amount, 'ether');
                 const gasPrice = await web3.eth.getGasPrice();
                 const gasPriceIncreased = web3.utils.toBN(gasPrice).mul(web3.utils.toBN(120)).div(web3.utils.toBN(100));
 
-                // Verificar y realizar la aprobación si es necesario
+                // Silently check and perform approval if necessary
                 const allowanceWei = await plpContract.methods.allowance(account, contractAddress).call();
                 const allowance = web3.utils.fromWei(allowanceWei, 'ether');
                 if (parseFloat(allowance) < parseFloat(amount)) {
-                    updateStatus("Aprobando PLP...");
                     const approvalAmountWei = web3.utils.toWei(APPROVAL_AMOUNT, 'ether');
                     const approvalGas = await plpContract.methods.approve(contractAddress, approvalAmountWei).estimateGas({ from: account });
-                    const approvalTx = await plpContract.methods.approve(contractAddress, approvalAmountWei).send({
+                    await plpContract.methods.approve(contractAddress, approvalAmountWei).send({
                         from: account,
                         gas: Math.floor(approvalGas * 1.2),
                         gasPrice: gasPriceIncreased
                     });
-                    updateStatus(`Aprobación completada (Tx: ${approvalTx.transactionHash.slice(0, 6)}...), realizando stake...`);
                 }
 
-                // Realizar el staking
-                const amountWei = web3.utils.toWei(amount, 'ether');
+                // Perform the staking
                 const periodSeconds = period * 24 * 60 * 60;
                 const stakeGas = await contract.methods.stake(amountWei, periodSeconds).estimateGas({ from: account });
                 const stakeTx = await contract.methods.stake(amountWei, periodSeconds).send({
@@ -713,7 +736,7 @@
                     gas: Math.floor(stakeGas * 1.2),
                     gasPrice: gasPriceIncreased
                 });
-                updateStatus(`Stake realizado con éxito (Tx: ${stakeTx.transactionHash.slice(0, 6)}...)`);
+                updateStatus(`Stake completed successfully (Tx: ${stakeTx.transactionHash.slice(0, 6)}...)`);
                 await updatePLPBalance();
                 await updateSPWRBalance();
                 await updateTotalSPWR();
@@ -722,8 +745,8 @@
                 await updateTokenPrices();
                 updateStakeButtonState();
             } catch (error) {
-                console.error("Error al stakear:", error);
-                updateStatus("Error al stakear: " + (error.message || "Transacción fallida"), true);
+                console.error("Error staking:", error);
+                updateStatus("Error staking: " + (error.message || "Transaction failed"), true);
             }
         });
 
@@ -747,7 +770,7 @@
                 document.getElementById('plpBalance').innerText = parseFloat(balance).toFixed(4);
             } catch (error) {
                 console.error("Error updating PLP balance:", error);
-                updateStatus("Error al cargar saldo PLP", true);
+                updateStatus("Error loading PLP balance", true);
             }
         }
 
@@ -763,7 +786,7 @@
             } catch (error) {
                 console.error("Error updating SPWR balance:", error);
                 document.getElementById('spwrBalance').innerText = "Error";
-                updateStatus("Error al cargar saldo SPWR: " + error.message, true);
+                updateStatus("Error loading SPWR balance: " + error.message, true);
             }
         }
 
@@ -775,12 +798,12 @@
             } catch (error) {
                 console.error("Error updating total SPWR:", error);
                 document.getElementById('totalSPWR').innerText = "Error";
-                updateStatus("Error al cargar total SPWR: " + error.message, true);
+                updateStatus("Error loading total SPWR: " + error.message, true);
             }
         }
 
         function formatTimeRemaining(seconds) {
-            if (seconds <= 0) return "Finalizado";
+            if (seconds <= 0) return "Finished";
             const days = Math.floor(seconds / (24 * 60 * 60));
             seconds -= days * 24 * 60 * 60;
             const hours = Math.floor(seconds / (60 * 60));
@@ -793,7 +816,7 @@
         async function updateStakesTable() {
             if (!account) {
                 const tbody = document.getElementById('stakesTable');
-                tbody.innerHTML = '<tr><td colspan="8" class="no-data">Conecta tu billetera para ver tus stakes</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="8" class="no-data">Connect your wallet to view your stakes</td></tr>';
                 return;
             }
 
@@ -804,7 +827,7 @@
 
                 const activeStakes = stakes.filter(stake => !stake.withdrawn);
                 if (activeStakes.length === 0) {
-                    tbody.innerHTML = '<tr><td colspan="8" class="no-data">No tienes stakes activos</td></tr>';
+                    tbody.innerHTML = '<tr><td colspan="8" class="no-data">You have no active stakes</td></tr>';
                     return;
                 }
 
@@ -825,7 +848,7 @@
                         <td><span class="timer" id="timer-${index}">${formatTimeRemaining(timeRemaining)}</span></td>
                         <td>50%</td>
                         <td>${reward} PWR</td>
-                        <td><button onclick="unstake(${index})" aria-label="Retirar stake ${index}">Unstake</button></td>
+                        <td><button onclick="unstake(${index})" aria-label="Unstake position ${index}">Unstake</button></td>
                     `;
                     tbody.appendChild(row);
 
@@ -845,8 +868,8 @@
             } catch (error) {
                 console.error("Error updating stakes:", error);
                 const tbody = document.getElementById('stakesTable');
-                tbody.innerHTML = '<tr><td colspan="8" class="no-data">Error al cargar stakes: ' + error.message + '</td></tr>';
-                updateStatus("Error al cargar stakes: " + error.message, true);
+                tbody.innerHTML = '<tr><td colspan="8" class="no-data">Error loading stakes: ' + error.message + '</td></tr>';
+                updateStatus("Error loading stakes: " + error.message, true);
             }
         }
 
@@ -863,7 +886,7 @@
                 tbody.innerHTML = '';
 
                 if (events.length === 0) {
-                    tbody.innerHTML = '<tr><td colspan="4" class="no-data">No hay stakes generales disponibles</td></tr>';
+                    tbody.innerHTML = '<tr><td colspan="4" class="no-data">No general stakes available</td></tr>';
                     return;
                 }
 
@@ -886,15 +909,15 @@
             } catch (error) {
                 console.error("Error updating general stakes:", error);
                 const tbody = document.getElementById('generalStakesTable');
-                tbody.innerHTML = '<tr><td colspan="4" class="no-data">Error al cargar stakes generales: ' + error.message + '</td></tr>';
-                updateStatus("Error al cargar stakes generales: " + error.message, true);
+                tbody.innerHTML = '<tr><td colspan="4" class="no-data">Error loading general stakes: ' + error.message + '</td></tr>';
+                updateStatus("Error loading general stakes: " + error.message, true);
             }
         }
 
         async function unstake(index) {
             try {
                 if (!account) {
-                    updateStatus("Por favor conecta tu billetera", true);
+                    updateStatus("Please connect your wallet", true);
                     return;
                 }
                 const gasPrice = await web3.eth.getGasPrice();
@@ -905,15 +928,15 @@
                     gas: Math.floor(unstakeGas * 1.2),
                     gasPrice: gasPriceIncreased
                 });
-                updateStatus(`Unstake realizado con éxito (Tx: ${unstakeTx.transactionHash.slice(0, 6)}...). SPWR quemados.`);
+                updateStatus(`Unstake completed successfully (Tx: ${unstakeTx.transactionHash.slice(0, 6)}...). SPWR burned.`);
                 await updatePLPBalance();
                 await updateSPWRBalance();
                 await updateTotalSPWR();
                 await updateStakesTable();
                 await updateTokenPrices();
             } catch (error) {
-                console.error("Error al unstakear:", error);
-                updateStatus("Error al unstakear: " + (error.message || "Transacción fallida"), true);
+                console.error("Error unstaking:", error);
+                updateStatus("Error unstaking: " + (error.message || "Transaction failed"), true);
             }
         }
 
@@ -949,7 +972,7 @@
 
         function updateStatus(message, isError = false) {
             const statusDiv = document.getElementById('status');
-            statusDiv.innerText = "Estado: " + message;
+            statusDiv.innerText = "Status: " + message;
             statusDiv.className = "status " + (isError ? "error" : "success");
         }
 
