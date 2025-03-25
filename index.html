@@ -177,153 +177,64 @@
       document.getElementById('plpBalance').innerText = web3.utils.fromWei(plpBalance, 'ether');
       const pwrBalance = await pwrContract.methods.balanceOf(account).call();
       document.getElementById('pwrBalance').innerText = web3.utils.fromWei(pwrBalance, 'ether');
-      const pwrContractBalance = await powerStakeContract.methods.getPWRBalance().call();
+      const pwrContractBalance = await pwrContract.methods.balanceOf(powerStakeAddress).call();
       document.getElementById('pwrContractBalance').innerText = web3.utils.fromWei(pwrContractBalance, 'ether');
-      const apr = await powerStakeContract.methods.currentAPR().call();
-      document.getElementById('currentAPR').innerText = apr;
+      const currentAPR = await powerStakeContract.methods.currentAPR().call();
+      document.getElementById('currentAPR').innerText = currentAPR;
       const pwrDistributed = await powerStakeContract.methods.pwrDistributed().call();
       document.getElementById('pwrDistributed').innerText = web3.utils.fromWei(pwrDistributed, 'ether');
       const rewardsActivated = await powerStakeContract.methods.rewardsActivated().call();
-      document.getElementById('rewardsActivated').innerText = rewardsActivated ? "ARMED" : "UNARMED";
+      document.getElementById('rewardsActivated').innerText = rewardsActivated ? "Yes" : "No";
       const firstMonthInitialized = await powerStakeContract.methods.firstMonthInitialized().call();
-      document.getElementById('firstMonthInitialized').innerText = firstMonthInitialized ? "LOCKED" : "UNLOCKED";
+      document.getElementById('firstMonthInitialized').innerText = firstMonthInitialized ? "Yes" : "No";
     }
 
+    // Funciones de Aprobar
     async function approvePLP() {
       const amount = document.getElementById('plpAmountApprove').value;
-      if (!amount || amount <= 0) {
-        document.getElementById('status').innerText = "ENTER VALID PLP!";
-        return;
-      }
-      const weiAmount = web3.utils.toWei(amount.toString(), 'ether');
-      document.getElementById('status').innerText = "AUTHORIZING PLP...";
-      try {
-        const balance = await plpContract.methods.balanceOf(account).call();
-        if (parseInt(balance) < parseInt(weiAmount)) {
-          document.getElementById('status').innerText = "INSUFFICIENT PLP!";
-          return;
-        }
-        const tx = await plpContract.methods.approve(powerStakeAddress, weiAmount).send({ from: account });
-        document.getElementById('status').innerText = `PLP AUTHORIZED! TX: ${tx.transactionHash}`;
-      } catch (error) {
-        document.getElementById('status').innerText = `APPROVE PLP FAILED: ${String(error.message || error)}`;
-        console.error(error);
-      }
+      const value = web3.utils.toWei(amount, 'ether');
+      await plpContract.methods.approve(powerStakeAddress, value).send({ from: account });
+      await updateDashboard();
     }
 
     async function approvePWR() {
       const amount = document.getElementById('pwrAmountApprove').value;
-      if (!amount || amount <= 0) {
-        document.getElementById('status').innerText = "ENTER VALID PWR!";
-        return;
-      }
-      const weiAmount = web3.utils.toWei(amount.toString(), 'ether');
-      document.getElementById('status').innerText = "AUTHORIZING PWR...";
-      try {
-        const balance = await pwrContract.methods.balanceOf(account).call();
-        if (parseInt(balance) < parseInt(weiAmount)) {
-          document.getElementById('status').innerText = "INSUFFICIENT PWR!";
-          return;
-        }
-        const tx = await pwrContract.methods.approve(powerStakeAddress, weiAmount).send({ from: account });
-        document.getElementById('status').innerText = `PWR AUTHORIZED! TX: ${tx.transactionHash}`;
-      } catch (error) {
-        document.getElementById('status').innerText = `APPROVE PWR FAILED: ${String(error.message || error)}`;
-        console.error(error);
-      }
+      const value = web3.utils.toWei(amount, 'ether');
+      await pwrContract.methods.approve(powerStakeAddress, value).send({ from: account });
+      await updateDashboard();
     }
 
+    // Funciones de depósito e inversión
     async function initializeFirstMonth() {
-      document.getElementById('status').innerText = "INITIALIZING FIRST STRIKE...";
-      try {
-        const tx = await powerStakeContract.methods.initializeFirstMonth().send({ from: account });
-        document.getElementById('status').innerText = `FIRST STRIKE LOCKED! TX: ${tx.transactionHash}`;
-        await updateDashboard();
-      } catch (error) {
-        document.getElementById('status').innerText = `INIT FAILED: ${String(error.message || error)}`;
-        console.error(error);
-      }
+      await powerStakeContract.methods.initializeFirstMonth().send({ from: account });
+      await updateDashboard();
     }
 
     async function depositPWR() {
       const amount = document.getElementById('pwrAmountDeposit').value;
-      if (!amount || amount <= 0) {
-        document.getElementById('status').innerText = "ENTER VALID PWR!";
-        return;
-      }
-      const weiAmount = web3.utils.toWei(amount.toString(), 'ether');
-      document.getElementById('status').innerText = "DEPOSITING PWR...";
-      try {
-        const balance = await pwrContract.methods.balanceOf(account).call();
-        if (parseInt(balance) < parseInt(weiAmount)) {
-          document.getElementById('status').innerText = "INSUFFICIENT PWR!";
-          return;
-        }
-        const tx = await powerStakeContract.methods.depositPWR(weiAmount).send({ from: account });
-        document.getElementById('status').innerText = `PWR DEPOSITED! TX: ${tx.transactionHash}`;
-        await updateDashboard();
-      } catch (error) {
-        document.getElementById('status').innerText = `DEPOSIT FAILED: ${String(error.message || error)}`;
-        console.error(error);
-      }
+      const value = web3.utils.toWei(amount, 'ether');
+      await powerStakeContract.methods.depositPWR(value).send({ from: account });
+      await updateDashboard();
     }
 
     async function stakePLP() {
       const amount = document.getElementById('plpAmountStake').value;
       const durationIndex = document.getElementById('durationIndex').value;
-      if (!amount || amount <= 0) {
-        document.getElementById('status').innerText = "ENTER VALID PLP!";
-        return;
-      }
-      const weiAmount = web3.utils.toWei(amount.toString(), 'ether');
-      document.getElementById('status').innerText = "LOCKING PLP...";
-      try {
-        const balance = await plpContract.methods.balanceOf(account).call();
-        if (parseInt(balance) < parseInt(weiAmount)) {
-          document.getElementById('status').innerText = "INSUFFICIENT PLP!";
-          return;
-        }
-        const tx = await powerStakeContract.methods.stakePLP(weiAmount, durationIndex).send({ from: account });
-        document.getElementById('status').innerText = `PLP STAKED! TX: ${tx.transactionHash}`;
-        await updateDashboard();
-      } catch (error) {
-        document.getElementById('status').innerText = `STAKE FAILED: ${String(error.message || error)}`;
-        console.error(error);
-      }
+      const value = web3.utils.toWei(amount, 'ether');
+      await powerStakeContract.methods.stakePLP(value, durationIndex).send({ from: account });
+      await updateDashboard();
     }
 
     async function claimReward() {
       const stakeIndex = document.getElementById('stakeIndex').value;
-      if (!stakeIndex || stakeIndex < 0) {
-        document.getElementById('status').innerText = "ENTER VALID STAKE INDEX!";
-        return;
-      }
-      document.getElementById('status').innerText = "CLAIMING REWARD...";
-      try {
-        const tx = await powerStakeContract.methods.claimReward(stakeIndex).send({ from: account });
-        document.getElementById('status').innerText = `REWARD CLAIMED! TX: ${tx.transactionHash}`;
-        await updateDashboard();
-      } catch (error) {
-        document.getElementById('status').innerText = `CLAIM FAILED: ${String(error.message || error)}`;
-        console.error(error);
-      }
+      await powerStakeContract.methods.claimReward(stakeIndex).send({ from: account });
+      await updateDashboard();
     }
 
     async function earlyWithdrawStake() {
       const stakeIndex = document.getElementById('stakeIndex').value;
-      if (!stakeIndex || stakeIndex < 0) {
-        document.getElementById('status').innerText = "ENTER VALID STAKE INDEX!";
-        return;
-      }
-      document.getElementById('status').innerText = "WITHDRAWING EARLY...";
-      try {
-        const tx = await powerStakeContract.methods.earlyWithdrawStake(stakeIndex).send({ from: account });
-        document.getElementById('status').innerText = `EARLY WITHDRAW COMPLETE! TX: ${tx.transactionHash}`;
-        await updateDashboard();
-      } catch (error) {
-        document.getElementById('status').innerText = `WITHDRAW FAILED: ${String(error.message || error)}`;
-        console.error(error);
-      }
+      await powerStakeContract.methods.earlyWithdrawStake(stakeIndex).send({ from: account });
+      await updateDashboard();
     }
   </script>
 </body>
