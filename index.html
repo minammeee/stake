@@ -3,12 +3,12 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>PowerStake - Dominate the Market</title>
+  <title>PowerStake - Full Control</title>
   <style>
     body {
       background: #1a1a1a;
       color: #ffd700;
-      font-family: 'Impact', 'Arial Narrow', sans-serif;
+      font-family: 'Impact', sans-serif;
       margin: 0;
       padding: 20px;
       text-transform: uppercase;
@@ -30,8 +30,9 @@
       padding: 15px 30px;
       font-size: 1.2em;
       cursor: pointer;
-      transition: all 0.3s ease;
+      transition: all 0.3s;
       box-shadow: 0 0 10px #ffd700;
+      margin: 5px;
     }
     button:hover {
       background: #ff0000;
@@ -68,9 +69,9 @@
   </style>
 </head>
 <body>
-  <h1>PowerStake - Crush the Game</h1>
+  <h1>PowerStrike - Total Domination</h1>
   <div id="dashboard">
-    <div id="account">Awaiting Connection...</div>
+    <div id="account">Wallet Disconnected</div>
     <div id="balances">
       PLP Power: <span id="plpBalance">0</span><br>
       PWR Arsenal: <span id="pwrBalance">0</span><br>
@@ -84,16 +85,24 @@
   <div id="status"></div>
 
   <div class="section">
-    <h2>Load the Vault (PWR)</h2>
-    <input type="number" id="pwrAmount" placeholder="PWR TO DEPLOY" step="0.01">
-    <button onclick="transferPWR()">Unleash PWR</button>
-    <button onclick="forceInit()">Force First Strike</button>
+    <h2>Connect & Approve</h2>
+    <button onclick="connectWallet()">Connect Wallet</button>
+    <input type="number" id="plpAmountApprove" placeholder="PLP TO APPROVE" step="0.01">
+    <button onclick="approvePLP()">Approve PLP</button>
+    <input type="number" id="pwrAmountApprove" placeholder="PWR TO APPROVE" step="0.01">
+    <button onclick="approvePWR()">Approve PWR</button>
   </div>
 
   <div class="section">
-    <h2>Stake Your Claim (PLP)</h2>
-    <input type="number" id="plpAmount" placeholder="PLP TO LOCK" step="0.01">
-    <button onclick="approvePLP()">Authorize PLP</button>
+    <h2>Initialize & Deposit</h2>
+    <button onclick="initializeFirstMonth()">Force First Strike</button>
+    <input type="number" id="pwrAmountDeposit" placeholder="PWR TO DEPOSIT" step="0.01">
+    <button onclick="depositPWR()">Deposit PWR</button>
+  </div>
+
+  <div class="section">
+    <h2>Stake PLP</h2>
+    <input type="number" id="plpAmountStake" placeholder="PLP TO STAKE" step="0.01">
     <select id="durationIndex">
       <option value="0">30 Days - No Bonus</option>
       <option value="1">60 Days - 10% Boost</option>
@@ -104,125 +113,64 @@
     <button onclick="stakePLP()">Lock & Load</button>
   </div>
 
+  <div class="section">
+    <h2>Claim & Withdraw</h2>
+    <input type="number" id="stakeIndex" placeholder="STAKE INDEX" step="1">
+    <button onclick="claimReward()">Claim Reward</button>
+    <button onclick="earlyWithdrawStake()">Early Withdraw</button>
+  </div>
+
   <script src="https://cdn.jsdelivr.net/npm/web3@1.7.4/dist/web3.min.js"></script>
   <script>
-    // Configuración
-    const powerStakeAddress = "0xAF9A84aa22d1dcdfc38d26B205120d5E89c5D908"; // Dirección del contrato desplegado
-    const plpTokenAddress = "0xe5c56E4a8F8d96e3A91b18D83b7f0c36663C9a74"; // PLP
-    const pwrTokenAddress = "0x3Eb3B7b3D95Cb3699295D7868F85e43b56AeeFcB"; // PWR
+    const powerStakeAddress = "0xAF9A84aa22d1dcdfc38d26B205120d5E89c5D908";
+    const plpTokenAddress = "0xe5c56E4a8F8d96e3A91b18D83b7f0c36663C9a74";
+    const pwrTokenAddress = "0x3Eb3B7b3D95Cb3699295D7868F85e43b56AeeFcB";
     const powerStakeABI = [
-      {
-        "inputs": [
-          {"internalType": "uint256", "name": "plpAmount", "type": "uint256"},
-          {"internalType": "uint256", "name": "durationIndex", "type": "uint256"}
-        ],
-        "name": "stakePLP",
-        "outputs": [],
-        "stateMutability": "nonpayable",
-        "type": "function"
-      },
-      {
-        "inputs": [],
-        "name": "initializeFirstMonth",
-        "outputs": [],
-        "stateMutability": "nonpayable",
-        "type": "function"
-      },
-      {
-        "inputs": [],
-        "name": "getPWRBalance",
-        "outputs": [{"internalType": "uint256", "name": "", "type": "uint256"}],
-        "stateMutability": "view",
-        "type": "function"
-      },
-      {
-        "inputs": [],
-        "name": "currentAPR",
-        "outputs": [{"internalType": "uint256", "name": "", "type": "uint256"}],
-        "stateMutability": "view",
-        "type": "function"
-      },
-      {
-        "inputs": [],
-        "name": "pwrDistributed",
-        "outputs": [{"internalType": "uint256", "name": "", "type": "uint256"}],
-        "stateMutability": "view",
-        "type": "function"
-      },
-      {
-        "inputs": [],
-        "name": "rewardsActivated",
-        "outputs": [{"internalType": "bool", "name": "", "type": "bool"}],
-        "stateMutability": "view",
-        "type": "function"
-      },
-      {
-        "inputs": [],
-        "name": "firstMonthInitialized",
-        "outputs": [{"internalType": "bool", "name": "", "type": "bool"}],
-        "stateMutability": "view",
-        "type": "function"
-      }
+      {"inputs":[],"name":"initializeFirstMonth","outputs":[],"stateMutability":"nonpayable","type":"function"},
+      {"inputs":[{"internalType":"uint256","name":"plpAmount","type":"uint256"},{"internalType":"uint256","name":"durationIndex","type":"uint256"}],"name":"stakePLP","outputs":[],"stateMutability":"nonpayable","type":"function"},
+      {"inputs":[{"internalType":"uint256","name":"amount","type":"uint256"}],"name":"depositPWR","outputs":[],"stateMutability":"nonpayable","type":"function"},
+      {"inputs":[{"internalType":"uint256","name":"stakeIndex","type":"uint256"}],"name":"claimReward","outputs":[],"stateMutability":"nonpayable","type":"function"},
+      {"inputs":[{"internalType":"uint256","name":"stakeIndex","type":"uint256"}],"name":"earlyWithdrawStake","outputs":[],"stateMutability":"nonpayable","type":"function"},
+      {"inputs":[],"name":"getPWRBalance","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},
+      {"inputs":[],"name":"currentAPR","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},
+      {"inputs":[],"name":"pwrDistributed","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},
+      {"inputs":[],"name":"rewardsActivated","outputs":[{"internalType":"bool","name":"","type":"bool"}],"stateMutability":"view","type":"function"},
+      {"inputs":[],"name":"firstMonthInitialized","outputs":[{"internalType":"bool","name":"","type":"bool"}],"stateMutability":"view","type":"function"}
     ];
     const erc20ABI = [
-      {
-        "constant": false,
-        "inputs": [
-          {"name": "to", "type": "address"},
-          {"name": "amount", "type": "uint256"}
-        ],
-        "name": "transfer",
-        "outputs": [{"name": "", "type": "bool"}],
-        "type": "function"
-      },
-      {
-        "constant": false,
-        "inputs": [
-          {"name": "spender", "type": "address"},
-          {"name": "amount", "type": "uint256"}
-        ],
-        "name": "approve",
-        "outputs": [{"name": "", "type": "bool"}],
-        "type": "function"
-      },
-      {
-        "constant": true,
-        "inputs": [{"name": "account", "type": "address"}],
-        "name": "balanceOf",
-        "outputs": [{"name": "", "type": "uint256"}],
-        "type": "function"
-      }
+      {"constant":false,"inputs":[{"name":"spender","type":"address"},{"name":"amount","type":"uint256"}],"name":"approve","outputs":[{"name":"","type":"bool"}],"type":"function"},
+      {"constant":true,"inputs":[{"name":"account","type":"address"}],"name":"balanceOf","outputs":[{"name":"","type":"uint256"}],"type":"function"}
     ];
 
-    let web3;
-    let powerStakeContract;
-    let plpContract;
-    let pwrContract;
-    let account;
+    let web3, powerStakeContract, plpContract, pwrContract, account;
 
-    // Inicialización
+    // Conexión al cargar
     window.addEventListener('load', async () => {
       if (window.ethereum) {
         web3 = new Web3(window.ethereum);
-        try {
-          await window.ethereum.request({ method: 'eth_requestAccounts' });
-          const accounts = await web3.eth.getAccounts();
-          account = accounts[0];
-          document.getElementById('account').innerText = `Commander: ${account}`;
-
-          powerStakeContract = new web3.eth.Contract(powerStakeABI, powerStakeAddress);
-          plpContract = new web3.eth.Contract(erc20ABI, plpTokenAddress);
-          pwrContract = new web3.eth.Contract(erc20ABI, pwrTokenAddress);
-
-          await updateDashboard();
-        } catch (error) {
-          document.getElementById('status').innerText = `SYSTEM FAILURE: ${String(error)}`;
-          console.error(error);
-        }
+        await connectWallet();
       } else {
         document.getElementById('status').innerText = "INSTALL METAMASK TO DOMINATE!";
       }
     });
+
+    async function connectWallet() {
+      try {
+        const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+        account = accounts[0];
+        document.getElementById('account').innerText = `Commander: ${account}`;
+
+        powerStakeContract = new web3.eth.Contract(powerStakeABI, powerStakeAddress);
+        plpContract = new web3.eth.Contract(erc20ABI, plpTokenAddress);
+        pwrContract = new web3.eth.Contract(erc20ABI, pwrTokenAddress);
+
+        await updateDashboard();
+        document.getElementById('status').innerText = "WALLET LOCKED IN!";
+      } catch (error) {
+        document.getElementById('status').innerText = `CONNECTION FAILED: ${String(error.message || error)}`;
+        console.error(error);
+      }
+    }
 
     async function updateDashboard() {
       const plpBalance = await plpContract.methods.balanceOf(account).call();
@@ -241,114 +189,139 @@
       document.getElementById('firstMonthInitialized').innerText = firstMonthInitialized ? "LOCKED" : "UNLOCKED";
     }
 
-    // Transferir PWR directamente
-    async function transferPWR() {
-      const amount = document.getElementById('pwrAmount').value;
-      if (!amount || amount <= 0) {
-        document.getElementById('status').innerText = "DEPLOY REAL POWER!";
-        return;
-      }
-
-      const weiAmount = web3.utils.toWei(amount.toString(), 'ether');
-      document.getElementById('status').innerText = "UNLEASHING PWR...";
-
-      try {
-        const balance = await pwrContract.methods.balanceOf(account).call();
-        if (parseInt(balance) < parseInt(weiAmount)) {
-          document.getElementById('status').innerText = "INSUFFICIENT PWR ARSENAL!";
-          return;
-        }
-
-        const tx = await pwrContract.methods.transfer(powerStakeAddress, weiAmount).send({ from: account });
-        document.getElementById('status').innerText = `PWR DEPLOYED! TX HASH: ${tx.transactionHash}`;
-        await updateDashboard();
-
-        const rewardsActive = await powerStakeContract.methods.rewardsActivated().call();
-        if (!rewardsActive) {
-          document.getElementById('status').innerText += " - REWARDS STILL UNARMED! STAKE AS OWNER TO ACTIVATE!";
-        }
-      } catch (error) {
-        document.getElementById('status').innerText = `DEPLOYMENT FAILED: ${String(error.message || error)}`;
-        console.error(error);
-      }
-    }
-
-    // Forzar inicialización del primer mes
-    async function forceInit() {
-      document.getElementById('status').innerText = "FORCING FIRST STRIKE...";
-      try {
-        const initialized = await powerStakeContract.methods.firstMonthInitialized().call();
-        if (initialized) {
-          document.getElementById('status').innerText = "ALREADY LOCKED!";
-          return;
-        }
-
-        const pwrBalance = await pwrContract.methods.balanceOf(account).call();
-        const requiredPWR = web3.utils.toWei("1000", 'ether');
-        if (parseInt(pwrBalance) < parseInt(requiredPWR)) {
-          document.getElementById('status').innerText = "NEED 1000 PWR TO LOCK!";
-          return;
-        }
-
-        const tx = await powerStakeContract.methods.initializeFirstMonth().send({ from: account });
-        document.getElementById('status').innerText = `FIRST STRIKE LOCKED! TX HASH: ${tx.transactionHash}`;
-        await updateDashboard();
-      } catch (error) {
-        document.getElementById('status').innerText = `FORCE FAILED: ${String(error.message || error)}`;
-        console.error(error);
-      }
-    }
-
-    // Aprobar PLP
     async function approvePLP() {
-      const amount = document.getElementById('plpAmount').value;
+      const amount = document.getElementById('plpAmountApprove').value;
       if (!amount || amount <= 0) {
-        document.getElementById('status').innerText = "LOCK REAL PLP!";
+        document.getElementById('status').innerText = "ENTER VALID PLP!";
         return;
       }
-
       const weiAmount = web3.utils.toWei(amount.toString(), 'ether');
       document.getElementById('status').innerText = "AUTHORIZING PLP...";
-
       try {
         const balance = await plpContract.methods.balanceOf(account).call();
         if (parseInt(balance) < parseInt(weiAmount)) {
-          document.getElementById('status').innerText = "INSUFFICIENT PLP POWER!";
+          document.getElementById('status').innerText = "INSUFFICIENT PLP!";
           return;
         }
-
         const tx = await plpContract.methods.approve(powerStakeAddress, weiAmount).send({ from: account });
-        document.getElementById('status').innerText = `PLP AUTHORIZED! TX HASH: ${tx.transactionHash}`;
+        document.getElementById('status').innerText = `PLP AUTHORIZED! TX: ${tx.transactionHash}`;
       } catch (error) {
-        document.getElementById('status').innerText = `AUTH FAILED: ${String(error.message || error)}`;
+        document.getElementById('status').innerText = `APPROVE PLP FAILED: ${String(error.message || error)}`;
         console.error(error);
       }
     }
 
-    // Hacer stake PLP
-    async function stakePLP() {
-      const amount = document.getElementById('plpAmount').value;
-      const durationIndex = document.getElementById('durationIndex').value;
+    async function approvePWR() {
+      const amount = document.getElementById('pwrAmountApprove').value;
       if (!amount || amount <= 0) {
-        document.getElementById('status').innerText = "LOCK REAL PLP!";
+        document.getElementById('status').innerText = "ENTER VALID PWR!";
         return;
       }
-
       const weiAmount = web3.utils.toWei(amount.toString(), 'ether');
-      document.getElementById('status').innerText = "LOCKING & LOADING...";
-
+      document.getElementById('status').innerText = "AUTHORIZING PWR...";
       try {
-        const firstMonth = await powerStakeContract.methods.firstMonthInitialized().call();
-        if (!firstMonth) {
-          document.getElementById('status').innerText = "FIRST MONTH UNLOCKED! FORCE INIT WITH 1000 PWR!";
+        const balance = await pwrContract.methods.balanceOf(account).call();
+        if (parseInt(balance) < parseInt(weiAmount)) {
+          document.getElementById('status').innerText = "INSUFFICIENT PWR!";
           return;
         }
+        const tx = await pwrContract.methods.approve(powerStakeAddress, weiAmount).send({ from: account });
+        document.getElementById('status').innerText = `PWR AUTHORIZED! TX: ${tx.transactionHash}`;
+      } catch (error) {
+        document.getElementById('status').innerText = `APPROVE PWR FAILED: ${String(error.message || error)}`;
+        console.error(error);
+      }
+    }
 
+    async function initializeFirstMonth() {
+      document.getElementById('status').innerText = "INITIALIZING FIRST STRIKE...";
+      try {
+        const tx = await powerStakeContract.methods.initializeFirstMonth().send({ from: account });
+        document.getElementById('status').innerText = `FIRST STRIKE LOCKED! TX: ${tx.transactionHash}`;
+        await updateDashboard();
+      } catch (error) {
+        document.getElementById('status').innerText = `INIT FAILED: ${String(error.message || error)}`;
+        console.error(error);
+      }
+    }
+
+    async function depositPWR() {
+      const amount = document.getElementById('pwrAmountDeposit').value;
+      if (!amount || amount <= 0) {
+        document.getElementById('status').innerText = "ENTER VALID PWR!";
+        return;
+      }
+      const weiAmount = web3.utils.toWei(amount.toString(), 'ether');
+      document.getElementById('status').innerText = "DEPOSITING PWR...";
+      try {
+        const balance = await pwrContract.methods.balanceOf(account).call();
+        if (parseInt(balance) < parseInt(weiAmount)) {
+          document.getElementById('status').innerText = "INSUFFICIENT PWR!";
+          return;
+        }
+        const tx = await powerStakeContract.methods.depositPWR(weiAmount).send({ from: account });
+        document.getElementById('status').innerText = `PWR DEPOSITED! TX: ${tx.transactionHash}`;
+        await updateDashboard();
+      } catch (error) {
+        document.getElementById('status').innerText = `DEPOSIT FAILED: ${String(error.message || error)}`;
+        console.error(error);
+      }
+    }
+
+    async function stakePLP() {
+      const amount = document.getElementById('plpAmountStake').value;
+      const durationIndex = document.getElementById('durationIndex').value;
+      if (!amount || amount <= 0) {
+        document.getElementById('status').innerText = "ENTER VALID PLP!";
+        return;
+      }
+      const weiAmount = web3.utils.toWei(amount.toString(), 'ether');
+      document.getElementById('status').innerText = "LOCKING PLP...";
+      try {
+        const balance = await plpContract.methods.balanceOf(account).call();
+        if (parseInt(balance) < parseInt(weiAmount)) {
+          document.getElementById('status').innerText = "INSUFFICIENT PLP!";
+          return;
+        }
         const tx = await powerStakeContract.methods.stakePLP(weiAmount, durationIndex).send({ from: account });
-        document.getElementById('status').innerText = `STAKE DOMINATED! TX HASH: ${tx.transactionHash}`;
+        document.getElementById('status').innerText = `PLP STAKED! TX: ${tx.transactionHash}`;
         await updateDashboard();
       } catch (error) {
         document.getElementById('status').innerText = `STAKE FAILED: ${String(error.message || error)}`;
+        console.error(error);
+      }
+    }
+
+    async function claimReward() {
+      const stakeIndex = document.getElementById('stakeIndex').value;
+      if (!stakeIndex || stakeIndex < 0) {
+        document.getElementById('status').innerText = "ENTER VALID STAKE INDEX!";
+        return;
+      }
+      document.getElementById('status').innerText = "CLAIMING REWARD...";
+      try {
+        const tx = await powerStakeContract.methods.claimReward(stakeIndex).send({ from: account });
+        document.getElementById('status').innerText = `REWARD CLAIMED! TX: ${tx.transactionHash}`;
+        await updateDashboard();
+      } catch (error) {
+        document.getElementById('status').innerText = `CLAIM FAILED: ${String(error.message || error)}`;
+        console.error(error);
+      }
+    }
+
+    async function earlyWithdrawStake() {
+      const stakeIndex = document.getElementById('stakeIndex').value;
+      if (!stakeIndex || stakeIndex < 0) {
+        document.getElementById('status').innerText = "ENTER VALID STAKE INDEX!";
+        return;
+      }
+      document.getElementById('status').innerText = "WITHDRAWING EARLY...";
+      try {
+        const tx = await powerStakeContract.methods.earlyWithdrawStake(stakeIndex).send({ from: account });
+        document.getElementById('status').innerText = `EARLY WITHDRAW COMPLETE! TX: ${tx.transactionHash}`;
+        await updateDashboard();
+      } catch (error) {
+        document.getElementById('status').innerText = `WITHDRAW FAILED: ${String(error.message || error)}`;
         console.error(error);
       }
     }
