@@ -92,6 +92,23 @@
             margin: 20px auto;
             text-align: center;
         }
+        .status {
+            margin-top: 15px;
+            padding: 10px;
+            border-radius: 8px;
+            background: #151515;
+            font-size: 14px;
+            text-align: center;
+            border: 1px solid transparent;
+        }
+        .error {
+            color: #ff4d4d;
+            border-color: #ff4d4d;
+        }
+        .success {
+            color: #00cc99;
+            border-color: #00cc99;
+        }
         @media (max-width: 600px) {
             .container {
                 padding: 15px;
@@ -130,6 +147,7 @@
                 <tbody id="generalStakesTable"></tbody>
             </table>
         </div>
+        <div class="status" id="status">Status: Loading general stakes...</div>
         <div class="back-btn">
             <button onclick="window.location.href='index.html'" aria-label="Back to main page">Back to Main Page</button>
         </div>
@@ -275,8 +293,8 @@
 
         async function init() {
             if (typeof window.ethereum === 'undefined') {
+                updateStatus("Please install MetaMask to continue. Download it at https://metamask.io", true);
                 console.error("MetaMask is not installed");
-                alert("Please install MetaMask to continue. Download it at https://metamask.io");
                 return;
             }
 
@@ -296,6 +314,7 @@
                             params: [{ chainId: web3.utils.toHex(DESIRED_NETWORK_ID) }],
                         });
                         console.log("Switched to PulseChain");
+                        updateStatus("Switched to PulseChain successfully");
                     } catch (switchError) {
                         console.error("Error switching network:", switchError);
                         if (switchError.code === 4902) {
@@ -317,13 +336,17 @@
                                     ]
                                 });
                                 console.log("PulseChain added and switched");
+                                updateStatus("PulseChain added and switched successfully");
                             } catch (addError) {
                                 console.error("Error adding PulseChain:", addError);
-                                alert("Could not add PulseChain. Please add it manually.");
+                                updateStatus("Could not add PulseChain. Please add it manually in MetaMask.", true);
                                 return;
                             }
+                        } else if (switchError.code === 4001) {
+                            updateStatus("Network switch rejected by user. Please switch to PulseChain to view stakes.", true);
+                            return;
                         } else {
-                            alert(`Error switching to PulseChain: ${switchError.message}`);
+                            updateStatus(`Error switching to PulseChain: ${switchError.message}`, true);
                             return;
                         }
                     }
@@ -332,15 +355,22 @@
                 await updateGeneralStakesTable();
             } catch (error) {
                 console.error("Error during initialization:", error);
+                updateStatus("Error initializing the application: " + (error.message || "Unknown error"), true);
                 const tbody = document.getElementById('generalStakesTable');
-                tbody.innerHTML = '<tr><td colspan="4" class="no-data">Error loading general stakes: ' + error.message + '</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="4" class="no-data">Error loading general stakes: ' + (error.message || "Unknown error") + '</td></tr>';
             }
         }
 
         async function updateGeneralStakesTable() {
             try {
+                updateStatus("Fetching general stakes...");
+
+                // Obtener el bloque actual para limitar el rango de búsqueda
+                const latestBlock = await web3.eth.getBlockNumber();
+                const fromBlock = Math.max(0, latestBlock - 1000000); // Últimos 1M de bloques para evitar sobrecarga
+
                 const events = await contract.getPastEvents('Staked', {
-                    fromBlock: 0,
+                    fromBlock: fromBlock,
                     toBlock: 'latest'
                 });
 
@@ -348,7 +378,8 @@
                 tbody.innerHTML = '';
 
                 if (events.length === 0) {
-                    tbody.innerHTML = '<tr><td colspan="4" class="no-data">No stakes found</td></tr>';
+                    tbody.innerHTML = '<tr><td colspan="4" class="no-data">No stakes found in the last 1M blocks. There may be older stakes not shown.</td></tr>';
+                    updateStatus("No stakes found in the recent blocks.");
                     return;
                 }
 
@@ -357,7 +388,7 @@
                     const amount = web3.utils.fromWei(event.returnValues.amount, 'ether');
                     const periodDays = (event.returnValues.period / (24 * 60 * 60)).toFixed(0);
                     const block = await web3.eth.getBlock(event.blockNumber);
-                    const stakeDate = new Date(block.timestamp * 1000).toLocaleString();
+                    const stakeDate = block ? new Date(block.timestamp * 1000).toLocaleString() : "Unknown";
 
                     const row = document.createElement('tr');
                     row.innerHTML = `
@@ -368,11 +399,20 @@
                     `;
                     tbody.appendChild(row);
                 }
+
+                updateStatus(`Successfully loaded ${events.length} stakes.`);
             } catch (error) {
                 console.error("Error loading general stakes:", error);
+                updateStatus("Error loading general stakes: " + (error.message || "Unknown error"), true);
                 const tbody = document.getElementById('generalStakesTable');
-                tbody.innerHTML = '<tr><td colspan="4" class="no-data">Error loading general stakes: ' + error.message + '</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="4" class="no-data">Error loading general stakes: ' + (error.message || "Unknown error") + '</td></tr>';
             }
+        }
+
+        function updateStatus(message, isError = false) {
+            const statusDiv = document.getElementById('status');
+            statusDiv.innerText = "Status: " + message;
+            statusDiv.className = "status " + (isError ? "error" : "success");
         }
 
         init();
