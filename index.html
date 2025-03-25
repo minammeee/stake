@@ -112,6 +112,11 @@
             <p>Dirección: <span id="account">No conectado</span></p>
         </div>
         <div>
+            <h2>Precios de Tokens (DexScreener)</h2>
+            <p>Precio PLP: $<span id="plpPrice">Cargando...</span></p>
+            <p>Precio sPWR: $<span id="spwrPrice">Cargando...</span></p>
+        </div>
+        <div>
             <h2>Saldo PLP</h2>
             <p>Saldo disponible: <span id="plpBalance">0</span> PLP</p>
         </div>
@@ -171,7 +176,7 @@
         const plpAddress = "0xe5c56E4a8F8d96e3A91b18D83b7f0c36663C9a74";
         const pwrAddress = "0x3Eb3B7b3D95Cb3699295D7868F85e43b56AeeFcB";
         const APR = 0.5; // 50% anual
-        const DESIRED_NETWORK_ID = 1; // Cambia esto según la red donde está el contrato (1 = Mainnet, 4 = Rinkeby, etc.)
+        const DESIRED_NETWORK_ID = 1; // Ethereum Mainnet
 
         const powerStakeABI = [
             {"inputs":[],"stateMutability":"nonpayable","type":"constructor"},
@@ -202,14 +207,12 @@
             contract = new web3.eth.Contract(powerStakeABI, contractAddress);
             plpContract = new web3.eth.Contract(erc20ABI, plpAddress);
 
-            // Verificar red
             const networkId = await web3.eth.net.getId();
             if (networkId !== DESIRED_NETWORK_ID) {
                 updateStatus(`Por favor cambia a la red correcta (ID: ${DESIRED_NETWORK_ID}) en MetaMask`, true);
                 return;
             }
 
-            // Escuchar cambios de cuenta
             window.ethereum.on('accountsChanged', async (accounts) => {
                 if (accounts.length === 0) {
                     account = null;
@@ -225,12 +228,39 @@
                 }
             });
 
-            // Escuchar cambios de red
             window.ethereum.on('chainChanged', () => {
                 window.location.reload();
             });
 
+            await updateTokenPrices();
             await updateGeneralStakesTable();
+        }
+
+        async function updateTokenPrices() {
+            try {
+                // Obtener precio de PLP
+                const plpResponse = await fetch(`https://api.dexscreener.com/latest/dex/tokens/${plpAddress}`);
+                const plpData = await plpResponse.json();
+                let plpPrice = "No disponible";
+                if (plpData.pairs && plpData.pairs.length > 0) {
+                    plpPrice = plpData.pairs[0].priceUsd;
+                }
+                document.getElementById('plpPrice').innerText = plpPrice;
+
+                // Obtener precio de sPWR
+                const spwrResponse = await fetch(`https://api.dexscreener.com/latest/dex/tokens/${pwrAddress}`);
+                const spwrData = await spwrResponse.json();
+                let spwrPrice = "No disponible";
+                if (spwrData.pairs && spwrData.pairs.length > 0) {
+                    spwrPrice = spwrData.pairs[0].priceUsd;
+                }
+                document.getElementById('spwrPrice').innerText = spwrPrice;
+            } catch (error) {
+                console.error("Error al obtener precios de DexScreener:", error);
+                document.getElementById('plpPrice').innerText = "Error";
+                document.getElementById('spwrPrice').innerText = "Error";
+                updateStatus("Error al cargar precios de DexScreener", true);
+            }
         }
 
         document.getElementById('connectWallet').addEventListener('click', async () => {
@@ -260,7 +290,6 @@
                     return;
                 }
 
-                // Verificar saldo PLP
                 const balanceWei = await plpContract.methods.balanceOf(account).call();
                 const balance = web3.utils.fromWei(balanceWei, 'ether');
                 if (parseFloat(balance) < parseFloat(amount)) {
@@ -268,7 +297,6 @@
                     return;
                 }
 
-                // Verificar allowance actual
                 const allowanceWei = await plpContract.methods.allowance(account, contractAddress).call();
                 const allowance = web3.utils.fromWei(allowanceWei, 'ether');
                 if (parseFloat(allowance) >= parseFloat(amount)) {
@@ -301,7 +329,6 @@
                     return;
                 }
 
-                // Verificar saldo PLP
                 const balanceWei = await plpContract.methods.balanceOf(account).call();
                 const balance = web3.utils.fromWei(balanceWei, 'ether');
                 if (parseFloat(balance) < parseFloat(amount)) {
@@ -309,7 +336,6 @@
                     return;
                 }
 
-                // Verificar allowance
                 const allowanceWei = await plpContract.methods.allowance(account, contractAddress).call();
                 const allowance = web3.utils.fromWei(allowanceWei, 'ether');
                 if (parseFloat(allowance) < parseFloat(amount)) {
@@ -325,6 +351,7 @@
                 await updateStakesTable();
                 await updateSPWRBalance();
                 await updateGeneralStakesTable();
+                await updateTokenPrices();
             } catch (error) {
                 updateStatus("Error al stakear: " + (error.message || "Transacción fallida"), true);
             }
@@ -379,7 +406,7 @@
         async function updateGeneralStakesTable() {
             try {
                 const latestBlock = await web3.eth.getBlockNumber();
-                const fromBlock = Math.max(0, latestBlock - 100000); // Últimos 100,000 bloques
+                const fromBlock = Math.max(0, latestBlock - 100000);
                 const events = await contract.getPastEvents('Staked', {
                     fromBlock: fromBlock,
                     toBlock: 'latest'
@@ -421,6 +448,7 @@
                 await updatePLPBalance();
                 await updateStakesTable();
                 await updateSPWRBalance();
+                await updateTokenPrices();
             } catch (error) {
                 updateStatus("Error al unstakear: " + (error.message || "Transacción fallida"), true);
             }
