@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>General Stakes - PowerStake</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Montserrat', Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #0f0f0f 0%, #1a1a1a 100%);
+            color: #ffffff;
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background: #1a1a1a;
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 0 20px rgba(255, 221, 0, 0.4);
+        }
+        h1 {
+            text-align: center;
+            color: #ffdd00;
+            margin-bottom: 10px;
+            font-weight: 700;
+            font-size: 28px;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+        }
+        h2 {
+            color: #ffdd00;
+            font-weight: 600;
+            margin-top: 20px;
+            font-size: 20px;
+            text-transform: uppercase;
+        }
+        button {
+            padding: 10px 20px;
+            background: #ffdd00;
+            color: #000000;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            margin: 10px 0;
+            transition: all 0.3s ease;
+            font-weight: 600;
+            font-size: 14px;
+        }
+        button:hover {
+            background: #ffea4d;
+            box-shadow: 0 0 15px rgba(255, 221, 0, 0.7);
+            transform: translateY(-2px);
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+            background: #151515;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        th, td {
+            padding: 10px;
+            border: 1px solid #ffdd00;
+            text-align: center;
+            font-size: 12px;
+        }
+        th {
+            background: #ffdd00;
+            color: #000000;
+            font-weight: 600;
+        }
+        td {
+            color: #d0d0d0;
+        }
+        .no-data {
+            text-align: center;
+            padding: 15px;
+            color: #d0d0d0;
+            font-style: italic;
+        }
+        .back-btn {
+            display: block;
+            margin: 20px auto;
+            text-align: center;
+        }
+        @media (max-width: 600px) {
+            .container {
+                padding: 15px;
+            }
+            h1 {
+                font-size: 24px;
+            }
+            h2 {
+                font-size: 18px;
+            }
+            button {
+                padding: 8px 15px;
+                font-size: 12px;
+            }
+            th, td {
+                font-size: 10px;
+                padding: 8px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>PowerStake - General Stakes</h1>
+        <div>
+            <h2>General Stakes (All Users)</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>User</th>
+                        <th>Amount</th>
+                        <th>Duration (Days)</th>
+                        <th>Stake Date</th>
+                    </tr>
+                </thead>
+                <tbody id="generalStakesTable"></tbody>
+            </table>
+        </div>
+        <div class="back-btn">
+            <button onclick="window.location.href='index.html'" aria-label="Back to main page">Back to Main Page</button>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/web3@1.7.4/dist/web3.min.js"></script>
+    <script>
+        const contractAddress = "0x781Bc6F2eB8F9466B26808cA53c159Ee61d6f8fB"; // PowerStake contract address on PulseChain
+        const DESIRED_NETWORK_ID = 369; // PulseChain
+
+        const powerStakeABI = [
+            {
+                "inputs": [
+                    {"internalType": "address", "name": "_plpToken", "type": "address"},
+                    {"internalType": "address", "name": "_pwrToken", "type": "address"}
+                ],
+                "stateMutability": "nonpayable",
+                "type": "constructor"
+            },
+            {
+                "anonymous": false,
+                "inputs": [
+                    {"indexed": true, "internalType": "address", "name": "user", "type": "address"},
+                    {"indexed": false, "internalType": "uint256", "name": "amount", "type": "uint256"},
+                    {"indexed": false, "internalType": "uint256", "name": "period", "type": "uint256"}
+                ],
+                "name": "Staked",
+                "type": "event"
+            },
+            {
+                "anonymous": false,
+                "inputs": [
+                    {"indexed": true, "internalType": "address", "name": "user", "type": "address"},
+                    {"indexed": false, "internalType": "uint256", "name": "amount", "type": "uint256"},
+                    {"indexed": false, "internalType": "uint256", "name": "reward", "type": "uint256"}
+                ],
+                "name": "Unstaked",
+                "type": "event"
+            },
+            {
+                "inputs": [],
+                "name": "getRewardBalance",
+                "outputs": [{"internalType": "uint256", "name": "", "type": "uint256"}],
+                "stateMutability": "view",
+                "type": "function"
+            },
+            {
+                "inputs": [{"internalType": "address", "name": "user", "type": "address"}],
+                "name": "getUserStakes",
+                "outputs": [
+                    {
+                        "components": [
+                            {"internalType": "uint256", "name": "amount", "type": "uint256"},
+                            {"internalType": "uint256", "name": "startTime", "type": "uint256"},
+                            {"internalType": "uint256", "name": "endTime", "type": "uint256"},
+                            {"internalType": "uint256", "name": "rewardDebt", "type": "uint256"},
+                            {"internalType": "bool", "name": "withdrawn", "type": "bool"}
+                        ],
+                        "internalType": "struct PowerStake.Stake[]",
+                        "name": "",
+                        "type": "tuple[]"
+                    }
+                ],
+                "stateMutability": "view",
+                "type": "function"
+            },
+            {
+                "inputs": [],
+                "name": "owner",
+                "outputs": [{"internalType": "address", "name": "", "type": "address"}],
+                "stateMutability": "view",
+                "type": "function"
+            },
+            {
+                "inputs": [],
+                "name": "plpToken",
+                "outputs": [{"internalType": "contract IERC20", "name": "", "type": "address"}],
+                "stateMutability": "view",
+                "type": "function"
+            },
+            {
+                "inputs": [],
+                "name": "pwrToken",
+                "outputs": [{"internalType": "contract IERC20", "name": "", "type": "address"}],
+                "stateMutability": "view",
+                "type": "function"
+            },
+            {
+                "inputs": [],
+                "name": "rewardRate",
+                "outputs": [{"internalType": "uint256", "name": "", "type": "uint256"}],
+                "stateMutability": "view",
+                "type": "function"
+            },
+            {
+                "inputs": [
+                    {"internalType": "uint256", "name": "amount", "type": "uint256"},
+                    {"internalType": "uint256", "name": "period", "type": "uint256"}
+                ],
+                "name": "stake",
+                "outputs": [],
+                "stateMutability": "nonpayable",
+                "type": "function"
+            },
+            {
+                "inputs": [],
+                "name": "totalPLPStaked",
+                "outputs": [{"internalType": "uint256", "name": "", "type": "uint256"}],
+                "stateMutability": "view",
+                "type": "function"
+            },
+            {
+                "inputs": [],
+                "name": "totalRewardsDistributed",
+                "outputs": [{"internalType": "uint256", "name": "", "type": "uint256"}],
+                "stateMutability": "view",
+                "type": "function"
+            },
+            {
+                "inputs": [],
+                "name": "totalSPWR",
+                "outputs": [{"internalType": "uint256", "name": "", "type": "uint256"}],
+                "stateMutability": "view",
+                "type": "function"
+            },
+            {
+                "inputs": [{"internalType": "address", "name": "user", "type": "address"}],
+                "name": "spwrBalanceOf",
+                "outputs": [{"internalType": "uint256", "name": "", "type": "uint256"}],
+                "stateMutability": "view",
+                "type": "function"
+            },
+            {
+                "inputs": [{"internalType": "uint256", "name": "stakeIndex", "type": "uint256"}],
+                "name": "unstake",
+                "outputs": [],
+                "stateMutability": "nonpayable",
+                "type": "function"
+            }
+        ];
+
+        let web3, contract;
+
+        async function init() {
+            if (typeof window.ethereum === 'undefined') {
+                console.error("MetaMask is not installed");
+                alert("Please install MetaMask to continue. Download it at https://metamask.io");
+                return;
+            }
+
+            try {
+                console.log("Initializing Web3...");
+                web3 = new Web3(window.ethereum);
+                contract = new web3.eth.Contract(powerStakeABI, contractAddress);
+                console.log("Web3 initialized successfully");
+
+                const networkId = await web3.eth.net.getId();
+                console.log("Current network:", networkId);
+                if (networkId !== DESIRED_NETWORK_ID) {
+                    console.log("Attempting to switch to PulseChain...");
+                    try {
+                        await window.ethereum.request({
+                            method: 'wallet_switchEthereumChain',
+                            params: [{ chainId: web3.utils.toHex(DESIRED_NETWORK_ID) }],
+                        });
+                        console.log("Switched to PulseChain");
+                    } catch (switchError) {
+                        console.error("Error switching network:", switchError);
+                        if (switchError.code === 4902) {
+                            try {
+                                await window.ethereum.request({
+                                    method: 'wallet_addEthereumChain',
+                                    params: [
+                                        {
+                                            chainId: web3.utils.toHex(DESIRED_NETWORK_ID),
+                                            chainName: 'PulseChain',
+                                            nativeCurrency: {
+                                                name: 'Pulse',
+                                                symbol: 'PLS',
+                                                decimals: 18
+                                            },
+                                            rpcUrls: ['https://rpc.pulsechain.com'],
+                                            blockExplorerUrls: ['https://scan.pulsechain.com']
+                                        }
+                                    ]
+                                });
+                                console.log("PulseChain added and switched");
+                            } catch (addError) {
+                                console.error("Error adding PulseChain:", addError);
+                                alert("Could not add PulseChain. Please add it manually.");
+                                return;
+                            }
+                        } else {
+                            alert(`Error switching to PulseChain: ${switchError.message}`);
+                            return;
+                        }
+                    }
+                }
+
+                await updateGeneralStakesTable();
+            } catch (error) {
+                console.error("Error during initialization:", error);
+                const tbody = document.getElementById('generalStakesTable');
+                tbody.innerHTML = '<tr><td colspan="4" class="no-data">Error loading general stakes: ' + error.message + '</td></tr>';
+            }
+        }
+
+        async function updateGeneralStakesTable() {
+            try {
+                const events = await contract.getPastEvents('Staked', {
+                    fromBlock: 0,
+                    toBlock: 'latest'
+                });
+
+                const tbody = document.getElementById('generalStakesTable');
+                tbody.innerHTML = '';
+
+                if (events.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="4" class="no-data">No stakes found</td></tr>';
+                    return;
+                }
+
+                for (const event of events) {
+                    const user = event.returnValues.user;
+                    const amount = web3.utils.fromWei(event.returnValues.amount, 'ether');
+                    const periodDays = (event.returnValues.period / (24 * 60 * 60)).toFixed(0);
+                    const block = await web3.eth.getBlock(event.blockNumber);
+                    const stakeDate = new Date(block.timestamp * 1000).toLocaleString();
+
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${user.slice(0, 6)}...${user.slice(-4)}</td>
+                        <td>${parseFloat(amount).toFixed(4)} PLP</td>
+                        <td>${periodDays}</td>
+                        <td>${stakeDate}</td>
+                    `;
+                    tbody.appendChild(row);
+                }
+            } catch (error) {
+                console.error("Error loading general stakes:", error);
+                const tbody = document.getElementById('generalStakesTable');
+                tbody.innerHTML = '<tr><td colspan="4" class="no-data">Error loading general stakes: ' + error.message + '</td></tr>';
+            }
+        }
+
+        init();
+    </script>
+</body>
+</html>
