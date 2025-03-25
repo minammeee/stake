@@ -49,7 +49,7 @@
             border: none;
             border-radius: 8px;
             cursor: pointer;
-            margin: 10px 0;
+            margin: 10px 5px;
             transition: all 0.3s ease;
             font-weight: 600;
             font-size: 14px;
@@ -58,6 +58,12 @@
             background: #ffea4d;
             box-shadow: 0 0 15px rgba(255, 221, 0, 0.7);
             transform: translateY(-2px);
+        }
+        button:disabled {
+            background: #666;
+            cursor: not-allowed;
+            box-shadow: none;
+            transform: none;
         }
         table {
             width: 100%;
@@ -87,6 +93,17 @@
             color: #d0d0d0;
             font-style: italic;
         }
+        .pagination {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-top: 15px;
+        }
+        .pagination span {
+            margin: 0 15px;
+            font-size: 14px;
+            color: #d0d0d0;
+        }
         .back-btn {
             display: block;
             margin: 20px auto;
@@ -109,6 +126,25 @@
             color: #00cc99;
             border-color: #00cc99;
         }
+        .chart-container {
+            margin-top: 30px;
+            padding: 20px;
+            background: #151515;
+            border-radius: 8px;
+            border: 1px solid #ffdd00;
+        }
+        .gecko-container {
+            margin-top: 30px;
+            padding: 20px;
+            background: #151515;
+            border-radius: 8px;
+            border: 1px solid #ffdd00;
+            height: 600px;
+        }
+        .gecko-container iframe {
+            width: 100%;
+            height: 100%;
+        }
         @media (max-width: 600px) {
             .container {
                 padding: 15px;
@@ -126,6 +162,13 @@
             th, td {
                 font-size: 10px;
                 padding: 8px;
+            }
+            .pagination span {
+                font-size: 12px;
+                margin: 0 10px;
+            }
+            .gecko-container {
+                height: 400px;
             }
         }
     </style>
@@ -146,17 +189,32 @@
                 </thead>
                 <tbody id="generalStakesTable"></tbody>
             </table>
+            <div class="pagination">
+                <button id="prevPage" onclick="changePage(-1)" aria-label="Previous page">Previous</button>
+                <span id="pageInfo">Page 1</span>
+                <button id="nextPage" onclick="changePage(1)" aria-label="Next page">Next</button>
+            </div>
         </div>
         <div class="status" id="status">Status: Loading general stakes...</div>
+        <div class="chart-container">
+            <h2>Staking Distribution by User</h2>
+            <canvas id="stakesChart"></canvas>
+        </div>
+        <div class="gecko-container">
+            <h2>Pool Data (GeckoTerminal)</h2>
+            <iframe height="100%" width="100%" id="geckoterminal-embed" title="GeckoTerminal Embed" src="https://www.geckoterminal.com/pulsechain/pools/0x7e5ad9ebede2dcd37cb991a632b2920715f986ba?embed=1&info=1&swaps=1&grayscale=0&light_chart=0&chart_type=price&resolution=1w" frameborder="0" allow="clipboard-write" allowfullscreen></iframe>
+        </div>
         <div class="back-btn">
             <button onclick="window.location.href='index.html'" aria-label="Back to main page">Back to Main Page</button>
         </div>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/web3@1.7.4/dist/web3.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <script>
         const contractAddress = "0x781Bc6F2eB8F9466B26808cA53c159Ee61d6f8fB"; // PowerStake contract address on PulseChain
         const DESIRED_NETWORK_ID = 369; // PulseChain
+        const STAKES_PER_PAGE = 5; // Mostrar 5 stakes por página
 
         const powerStakeABI = [
             {
@@ -289,7 +347,7 @@
             }
         ];
 
-        let web3, contract;
+        let web3, contract, allStakes = [], stakesData = [], currentPage = 1, totalPages = 1;
 
         async function init() {
             if (typeof window.ethereum === 'undefined') {
@@ -305,7 +363,7 @@
                 console.log("Web3 initialized successfully");
 
                 const networkId = await web3.eth.net.getId();
-                console.log("Current network:", networkId);
+                console.log("Current network ID:", networkId);
                 if (networkId !== DESIRED_NETWORK_ID) {
                     console.log("Attempting to switch to PulseChain...");
                     try {
@@ -352,61 +410,272 @@
                     }
                 }
 
-                await updateGeneralStakesTable();
+                await fetchGeneralStakes();
             } catch (error) {
                 console.error("Error during initialization:", error);
                 updateStatus("Error initializing the application: " + (error.message || "Unknown error"), true);
                 const tbody = document.getElementById('generalStakesTable');
                 tbody.innerHTML = '<tr><td colspan="4" class="no-data">Error loading general stakes: ' + (error.message || "Unknown error") + '</td></tr>';
+                document.getElementById('pageInfo').innerText = 'Page 1 of 1';
+                document.getElementById('prevPage').disabled = true;
+                document.getElementById('nextPage').disabled = true;
             }
         }
 
-        async function updateGeneralStakesTable() {
+        async function fetchGeneralStakes() {
             try {
                 updateStatus("Fetching general stakes...");
 
-                // Obtener el bloque actual para limitar el rango de búsqueda
+                // Obtener el bloque actual
                 const latestBlock = await web3.eth.getBlockNumber();
-                const fromBlock = Math.max(0, latestBlock - 1000000); // Últimos 1M de bloques para evitar sobrecarga
+                console.log("Latest block:", latestBlock);
 
-                const events = await contract.getPastEvents('Staked', {
-                    fromBlock: fromBlock,
-                    toBlock: 'latest'
-                });
+                // Intentar obtener eventos en bloques más recientes primero
+                let events = [];
+                let fromBlock = Math.max(0, latestBlock - 1000000); // Últimos 1M bloques para evitar sobrecarga
+                let toBlock = 'latest';
+                let attempts = 0;
+                const maxAttempts = 3;
 
-                const tbody = document.getElementById('generalStakesTable');
-                tbody.innerHTML = '';
+                while (events.length === 0 && attempts < maxAttempts) {
+                    console.log(`Fetching events from block ${fromBlock} to ${toBlock} (Attempt ${attempts + 1}/${maxAttempts})...`);
+                    try {
+                        events = await contract.getPastEvents('Staked', {
+                            fromBlock: fromBlock,
+                            toBlock: toBlock
+                        });
+                        console.log(`Found ${events.length} Staked events in range ${fromBlock} to ${toBlock}`);
+                    } catch (fetchError) {
+                        console.error(`Error fetching events from block ${fromBlock} to ${toBlock}:`, fetchError);
+                        throw fetchError; // Propagar el error para que se maneje en el catch exterior
+                    }
+
+                    if (events.length === 0 && fromBlock > 0) {
+                        // Si no se encontraron eventos, intentar con un rango más antiguo
+                        toBlock = fromBlock - 1;
+                        fromBlock = Math.max(0, fromBlock - 1000000);
+                        attempts++;
+                    } else {
+                        break;
+                    }
+                }
 
                 if (events.length === 0) {
-                    tbody.innerHTML = '<tr><td colspan="4" class="no-data">No stakes found in the last 1M blocks. There may be older stakes not shown.</td></tr>';
-                    updateStatus("No stakes found in the recent blocks.");
+                    // Si no se encontraron eventos en los intentos, intentar desde el bloque 0
+                    console.log("No events found in recent blocks, trying from block 0...");
+                    events = await contract.getPastEvents('Staked', {
+                        fromBlock: 0,
+                        toBlock: 'latest'
+                    });
+                    console.log(`Found ${events.length} Staked events from block 0 to latest`);
+                }
+
+                allStakes = [];
+                stakesData = [];
+                const userStakesMap = new Map();
+
+                console.log("Processing events...");
+                for (const event of events) {
+                    console.log("Event:", event);
+
+                    const user = event.returnValues.user;
+                    if (!web3.utils.isAddress(user)) {
+                        console.warn(`Invalid user address in event: ${user}, skipping...`);
+                        continue;
+                    }
+
+                    const amountWei = event.returnValues.amount;
+                    let amount;
+                    try {
+                        amount = web3.utils.fromWei(amountWei, 'ether');
+                    } catch (error) {
+                        console.error(`Error converting amount for user ${user}:`, error);
+                        amount = "0";
+                        continue;
+                    }
+
+                    const periodSeconds = event.returnValues.period;
+                    let periodDays;
+                    try {
+                        periodDays = (parseInt(periodSeconds) / (24 * 60 * 60)).toFixed(0);
+                    } catch (error) {
+                        console.error(`Error calculating periodDays for user ${user}:`, error);
+                        periodDays = "0";
+                        continue;
+                    }
+
+                    let stakeDate = "Unknown";
+                    try {
+                        const block = await web3.eth.getBlock(event.blockNumber);
+                        if (block && block.timestamp) {
+                            stakeDate = new Date(block.timestamp * 1000).toLocaleString();
+                        } else {
+                            console.warn(`Could not fetch timestamp for block ${event.blockNumber}`);
+                        }
+                    } catch (blockError) {
+                        console.error(`Error fetching block ${event.blockNumber}:`, blockError);
+                    }
+
+                    allStakes.push({
+                        user,
+                        amount,
+                        periodDays,
+                        stakeDate
+                    });
+
+                    const amountFloat = parseFloat(amount);
+                    if (!isNaN(amountFloat)) {
+                        if (userStakesMap.has(user)) {
+                            userStakesMap.set(user, userStakesMap.get(user) + amountFloat);
+                        } else {
+                            userStakesMap.set(user, amountFloat);
+                        }
+                    } else {
+                        console.warn(`Invalid amountFloat for user ${user}: ${amountFloat}`);
+                    }
+                }
+
+                stakesData = Array.from(userStakesMap, ([user, totalAmount]) => ({
+                    user: user.slice(0, 6) + "..." + user.slice(-4),
+                    totalAmount
+                }));
+
+                totalPages = Math.ceil(allStakes.length / STAKES_PER_PAGE);
+                currentPage = 1;
+
+                if (allStakes.length === 0) {
+                    const tbody = document.getElementById('generalStakesTable');
+                    tbody.innerHTML = '<tr><td colspan="4" class="no-data">No stakes found in the contract.</td></tr>';
+                    updateStatus("No stakes found in the contract. Please ensure stakes exist.");
+                    document.getElementById('pageInfo').innerText = 'Page 1 of 1';
+                    document.getElementById('prevPage').disabled = true;
+                    document.getElementById('nextPage').disabled = true;
+                    renderChart([]);
                     return;
                 }
 
-                for (const event of events) {
-                    const user = event.returnValues.user;
-                    const amount = web3.utils.fromWei(event.returnValues.amount, 'ether');
-                    const periodDays = (event.returnValues.period / (24 * 60 * 60)).toFixed(0);
-                    const block = await web3.eth.getBlock(event.blockNumber);
-                    const stakeDate = block ? new Date(block.timestamp * 1000).toLocaleString() : "Unknown";
-
-                    const row = document.createElement('tr');
-                    row.innerHTML = `
-                        <td>${user.slice(0, 6)}...${user.slice(-4)}</td>
-                        <td>${parseFloat(amount).toFixed(4)} PLP</td>
-                        <td>${periodDays}</td>
-                        <td>${stakeDate}</td>
-                    `;
-                    tbody.appendChild(row);
-                }
-
-                updateStatus(`Successfully loaded ${events.length} stakes.`);
+                console.log(`Processed ${allStakes.length} stakes`);
+                updateStatus(`Successfully loaded ${allStakes.length} stakes. Showing ${STAKES_PER_PAGE} per page.`);
+                renderTablePage();
+                renderChart(stakesData);
             } catch (error) {
                 console.error("Error loading general stakes:", error);
                 updateStatus("Error loading general stakes: " + (error.message || "Unknown error"), true);
                 const tbody = document.getElementById('generalStakesTable');
                 tbody.innerHTML = '<tr><td colspan="4" class="no-data">Error loading general stakes: ' + (error.message || "Unknown error") + '</td></tr>';
+                document.getElementById('pageInfo').innerText = 'Page 1 of 1';
+                document.getElementById('prevPage').disabled = true;
+                document.getElementById('nextPage').disabled = true;
+                renderChart([]);
             }
+        }
+
+        function renderTablePage() {
+            const tbody = document.getElementById('generalStakesTable');
+            tbody.innerHTML = '';
+
+            const startIndex = (currentPage - 1) * STAKES_PER_PAGE;
+            const endIndex = Math.min(startIndex + STAKES_PER_PAGE, allStakes.length);
+            const stakesToShow = allStakes.slice(startIndex, endIndex);
+
+            console.log(`Rendering page ${currentPage}: stakes from index ${startIndex} to ${endIndex - 1}`);
+            for (const stake of stakesToShow) {
+                console.log("Rendering stake:", stake);
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${stake.user.slice(0, 6)}...${stake.user.slice(-4)}</td>
+                    <td>${parseFloat(stake.amount).toFixed(4)} PLP</td>
+                    <td>${stake.periodDays}</td>
+                    <td>${stake.stakeDate}</td>
+                `;
+                tbody.appendChild(row);
+            }
+
+            document.getElementById('pageInfo').innerText = `Page ${currentPage} of ${totalPages}`;
+            document.getElementById('prevPage').disabled = currentPage === 1;
+            document.getElementById('nextPage').disabled = currentPage === totalPages;
+        }
+
+        function changePage(direction) {
+            currentPage += direction;
+            if (currentPage < 1) currentPage = 1;
+            if (currentPage > totalPages) currentPage = totalPages;
+            renderTablePage();
+        }
+
+        function renderChart(data) {
+            const ctx = document.getElementById('stakesChart').getContext('2d');
+            
+            if (window.stakesChart && typeof window.stakesChart.destroy === 'function') {
+                window.stakesChart.destroy();
+            }
+
+            if (data.length === 0) {
+                const chartContainer = document.getElementById('stakesChart').parentElement;
+                chartContainer.innerHTML = '<p class="no-data">No staking data available to display.</p>';
+                chartContainer.innerHTML += '<canvas id="stakesChart"></canvas>';
+                return;
+            }
+
+            window.stakesChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: data.map(item => item.user),
+                    datasets: [{
+                        label: 'Total PLP Staked',
+                        data: data.map(item => item.totalAmount),
+                        backgroundColor: '#ffdd00',
+                        borderColor: '#ffdd00',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: 'PLP Amount',
+                                color: '#ffffff'
+                            },
+                            ticks: {
+                                color: '#d0d0d0'
+                            },
+                            grid: {
+                                color: '#2a2a2a'
+                            }
+                        },
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'User',
+                                color: '#ffffff'
+                            },
+                            ticks: {
+                                color: '#d0d0d0'
+                            },
+                            grid: {
+                                color: '#2a2a2a'
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            labels: {
+                                color: '#ffffff'
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return `Total PLP Staked: ${context.parsed.y.toFixed(2)} PLP`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
         }
 
         function updateStatus(message, isError = false) {
