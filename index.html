@@ -3,185 +3,109 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PowerStake - Staking PLP</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 0;
-            padding: 20px;
-            background-color: #f0f0f0;
-            color: #333;
-        }
-        .container {
-            max-width: 800px;
-            margin: 0 auto;
-            background: white;
-            padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0 0 10px rgba(0,0,0,0.1);
-        }
-        h1 {
-            text-align: center;
-            color: #2c3e50;
-        }
-        button {
-            padding: 10px 20px;
-            background-color: #3498db;
-            color: white;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            margin: 5px;
-        }
-        button:hover {
-            background-color: #2980b9;
-        }
-        input {
-            padding: 8px;
-            margin: 5px;
-            border: 1px solid #ddd;
-            border-radius: 5px;
-            width: 200px;
-        }
-        .status {
-            margin-top: 20px;
-            padding: 10px;
-            border-radius: 5px;
-            background-color: #ecf0f1;
-        }
-        .error {
-            color: red;
-        }
-        .success {
-            color: green;
-        }
-    </style>
+    <title>PowerStake DApp</title>
+    <script src="https://cdn.jsdelivr.net/npm/ethers@5.6.8/dist/ethers.umd.min.js"></script>
 </head>
 <body>
-    <div class="container">
-        <h1>PowerStake - Staking PLP</h1>
-        <div>
-            <button id="connectWallet">Conectar Billetera</button>
-            <p>Dirección: <span id="account">No conectado</span></p>
-        </div>
-        <div>
-            <h2>Aprobar PLP</h2>
-            <input type="number" id="approveAmount" placeholder="Cantidad PLP (ej. 100)" step="0.01">
-            <button id="approveButton">Aprobar PLP</button>
-        </div>
-        <div>
-            <h2>Hacer Stake</h2>
-            <input type="number" id="stakeAmount" placeholder="Cantidad PLP (ej. 100)" step="0.01">
-            <input type="number" id="stakePeriod" placeholder="Días (ej. 30)" min="30">
-            <button id="stakeButton">Stake PLP</button>
-        </div>
-        <div>
-            <h2>Retirar Stake</h2>
-            <input type="number" id="stakeIndex" placeholder="Índice del Stake (ej. 0)" min="0">
-            <button id="unstakeButton">Unstake</button>
-        </div>
-        <div class="status" id="status">Estado: Esperando acción...</div>
+    <h1>PowerStake - DApp</h1>
+    <div>
+        <h2>Stake PLP</h2>
+        <label for="amount">Cantidad de PLP:</label>
+        <input type="number" id="amount" placeholder="Cantidad de PLP">
+        <label for="period">Periodo (en días):</label>
+        <input type="number" id="period" placeholder="Periodo en días">
+        <button onclick="stake()">Realizar Stake</button>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/web3@1.7.4/dist/web3.min.js"></script>
+    <hr>
+
+    <div>
+        <h2>Stakes Activos</h2>
+        <button onclick="getActiveStakes()">Ver Stakes Activos</button>
+        <ul id="stakeList"></ul>
+    </div>
+
+    <hr>
+
+    <div>
+        <h2>Deshacer Stake</h2>
+        <label for="unstakeIndex">Índice del Stake a retirar:</label>
+        <input type="number" id="unstakeIndex" placeholder="Índice del stake">
+        <button onclick="unstake()">Retirar Stake</button>
+    </div>
+
     <script>
-        const contractAddress = "0x781Bc6F2eB8F9466B26808cA53c159Ee61d6f8fB";
-        const plpAddress = "0xe5c56E4a8F8d96e3A91b18D83b7f0c36663C9a74";
-        const pwrAddress = "0x3Eb3B7b3D95Cb3699295D7868F85e43b56AeeFcB";
+        // Configurar Web3.js o Ethers.js
+        const provider = new ethers.providers.Web3Provider(window.ethereum);
+        let signer;
+        let contract;
 
-        const powerStakeABI = [
-            {"inputs":[],"stateMutability":"nonpayable","type":"constructor"},
-            {"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"user","type":"address"},{"indexed":false,"internalType":"uint256","name":"amount","type":"uint256"},{"indexed":false,"internalType":"uint256","name":"period","type":"uint256"}],"name":"Staked","type":"event"},
-            {"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"user","type":"address"},{"indexed":false,"internalType":"uint256","name":"amount","type":"uint256"},{"indexed":false,"internalType":"uint256","name":"reward","type":"uint256"}],"name":"Unstaked","type":"event"},
-            {"inputs":[{"internalType":"address","name":"user","type":"address"}],"name":"getSPWRBalance","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},
-            {"inputs":[{"internalType":"address","name":"user","type":"address"}],"name":"getUserStakes","outputs":[{"components":[{"internalType":"uint256","name":"amount","type":"uint256"},{"internalType":"uint256","name":"startTime","type":"uint256"},{"internalType":"uint256","name":"endTime","type":"uint256"},{"internalType":"uint256","name":"rewardDebt","type":"uint256"},{"internalType":"bool","name":"withdrawn","type":"bool"}],"internalType":"struct PowerStake.Stake[]","name":"","type":"tuple[]"}],"stateMutability":"view","type":"function"},
-            {"inputs":[],"name":"getRewardBalance","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},
-            {"inputs":[{"internalType":"uint256","name":"amount","type":"uint256"},{"internalType":"uint256","name":"period","type":"uint256"}],"name":"stake","outputs":[],"stateMutability":"nonpayable","type":"function"},
-            {"inputs":[{"internalType":"uint256","name":"stakeIndex","type":"uint256"}],"name":"unstake","outputs":[],"stateMutability":"nonpayable","type":"function"}
+        const powerStakeAddress = "0xYourContractAddress"; // Dirección del contrato PowerStake
+        const plpTokenAddress = "0xe5c56E4a8F8d96e3A91b18D83b7f0c36663C9a74"; // Dirección PLP
+        const pwrTokenAddress = "0x3Eb3B7b3D95Cb3699295D7868F85e43b56AeeFcB"; // Dirección PWR
+
+        const abi = [
+            // Agrega el ABI de tu contrato aquí
+            "function stake(uint256 amount, uint256 period) external",
+            "function unstake(uint256 stakeIndex) external",
+            "function getActiveStakes(address user) external view returns (tuple(uint256 amount, uint256 startTime, uint256 endTime, uint256 rewardDebt, bool withdrawn)[])",
+            "function getStakeCountdown(address user, uint256 stakeIndex) external view returns (uint256)"
         ];
 
-        const erc20ABI = [
-            {"inputs":[{"internalType":"address","name":"account","type":"address"}],"name":"balanceOf","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},
-            {"inputs":[{"internalType":"address","name":"spender","type":"address"},{"internalType":"uint256","name":"amount","type":"uint256"}],"name":"approve","outputs":[{"internalType":"bool","name":"","type":"bool"}],"stateMutability":"nonpayable","type":"function"}
-        ];
-
-        let web3, account, contract, plpContract;
-
+        // Inicializar el contrato
         async function init() {
-            if (typeof window.ethereum !== 'undefined') {
-                web3 = new Web3(window.ethereum);
-                contract = new web3.eth.Contract(powerStakeABI, contractAddress);
-                plpContract = new web3.eth.Contract(erc20ABI, plpAddress);
-            } else {
-                updateStatus("Por favor instala MetaMask", true);
-            }
+            await provider.send("eth_requestAccounts", []); // Solicitar acceso a la cuenta de MetaMask
+            signer = provider.getSigner();
+            contract = new ethers.Contract(powerStakeAddress, abi, signer);
         }
 
-        document.getElementById('connectWallet').addEventListener('click', async () => {
-            try {
-                await window.ethereum.request({ method: 'eth_requestAccounts' });
-                const accounts = await web3.eth.getAccounts();
-                account = accounts[0];
-                document.getElementById('account').innerText = account;
-                updateStatus("Billetera conectada: " + account);
-            } catch (error) {
-                updateStatus("Error al conectar: " + error.message, true);
-            }
-        });
+        // Realizar Stake
+        async function stake() {
+            const amount = document.getElementById("amount").value;
+            const period = document.getElementById("period").value * 86400; // Convertir días a segundos
 
-        document.getElementById('approveButton').addEventListener('click', async () => {
-            try {
-                const amount = document.getElementById('approveAmount').value;
-                if (!amount || !account) {
-                    updateStatus("Conecta billetera y especifica cantidad", true);
-                    return;
-                }
-                const amountWei = web3.utils.toWei(amount, 'ether');
-                await plpContract.methods.approve(contractAddress, amountWei).send({ from: account });
-                updateStatus("PLP aprobado correctamente");
-            } catch (error) {
-                updateStatus("Error al aprobar: " + error.message, true);
+            if (!amount || !period) {
+                alert("Por favor ingresa una cantidad y un periodo.");
+                return;
             }
-        });
 
-        document.getElementById('stakeButton').addEventListener('click', async () => {
-            try {
-                const amount = document.getElementById('stakeAmount').value;
-                const period = document.getElementById('stakePeriod').value;
-                if (!amount || !period || !account) {
-                    updateStatus("Conecta billetera y completa los campos", true);
-                    return;
-                }
-                const amountWei = web3.utils.toWei(amount, 'ether');
-                const periodSeconds = period * 24 * 60 * 60; // Días a segundos
-                await contract.methods.stake(amountWei, periodSeconds).send({ from: account });
-                updateStatus("Stake realizado con éxito");
-            } catch (error) {
-                updateStatus("Error al stakear: " + error.message, true);
-            }
-        });
-
-        document.getElementById('unstakeButton').addEventListener('click', async () => {
-            try {
-                const stakeIndex = document.getElementById('stakeIndex').value;
-                if (!stakeIndex || !account) {
-                    updateStatus("Conecta billetera y especifica índice", true);
-                    return;
-                }
-                await contract.methods.unstake(stakeIndex).send({ from: account });
-                updateStatus("Unstake realizado con éxito");
-            } catch (error) {
-                updateStatus("Error al unstakear: " + error.message, true);
-            }
-        });
-
-        function updateStatus(message, isError = false) {
-            const statusDiv = document.getElementById('status');
-            statusDiv.innerText = "Estado: " + message;
-            statusDiv.className = "status " + (isError ? "error" : "success");
+            const tx = await contract.stake(ethers.utils.parseUnits(amount, 18), period);
+            await tx.wait();
+            alert("Stake realizado con éxito.");
         }
 
+        // Ver Stakes Activos
+        async function getActiveStakes() {
+            const address = await signer.getAddress();
+            const stakes = await contract.getActiveStakes(address);
+
+            const stakeList = document.getElementById("stakeList");
+            stakeList.innerHTML = ''; // Limpiar lista
+
+            stakes.forEach((stake, index) => {
+                const li = document.createElement("li");
+                li.textContent = `Stake #${index + 1}: ${ethers.utils.formatUnits(stake.amount, 18)} PLP, Tiempo restante: ${stake.endTime - Math.floor(Date.now() / 1000)} segundos`;
+                stakeList.appendChild(li);
+            });
+        }
+
+        // Deshacer Stake
+        async function unstake() {
+            const index = document.getElementById("unstakeIndex").value;
+
+            if (!index) {
+                alert("Por favor ingresa un índice de stake.");
+                return;
+            }
+
+            const tx = await contract.unstake(index);
+            await tx.wait();
+            alert("Stake retirado con éxito.");
+        }
+
+        // Inicializar la DApp
         init();
     </script>
 </body>
 </html>
+
