@@ -317,57 +317,79 @@
         let web3, account, contract, plpContract, pwrPriceUsd = 0;
 
         async function init() {
+            // Verificar si MetaMask está instalado
             if (typeof window.ethereum === 'undefined') {
-                updateStatus("Por favor instala MetaMask", true);
+                updateStatus("Por favor instala MetaMask para continuar. Descárgalo en https://metamask.io", true);
+                console.error("MetaMask no está instalado");
                 return;
             }
 
-            web3 = new Web3(window.ethereum);
-            contract = new web3.eth.Contract(powerStakeABI, contractAddress);
-            plpContract = new web3.eth.Contract(erc20ABI, plpAddress);
+            try {
+                console.log("Inicializando Web3...");
+                web3 = new Web3(window.ethereum);
+                contract = new web3.eth.Contract(powerStakeABI, contractAddress);
+                plpContract = new web3.eth.Contract(erc20ABI, plpAddress);
+                console.log("Web3 inicializado correctamente");
 
-            const networkId = await web3.eth.net.getId();
-            if (networkId !== DESIRED_NETWORK_ID) {
-                try {
-                    await window.ethereum.request({
-                        method: 'wallet_switchEthereumChain',
-                        params: [{ chainId: web3.utils.toHex(DESIRED_NETWORK_ID) }],
-                    });
-                } catch (error) {
-                    updateStatus(`Por favor cambia a la red correcta (ID: ${DESIRED_NETWORK_ID}) en MetaMask`, true);
-                    return;
+                // Verificar la red
+                const networkId = await web3.eth.net.getId();
+                console.log("Red actual:", networkId);
+                if (networkId !== DESIRED_NETWORK_ID) {
+                    console.log("Intentando cambiar a Ethereum Mainnet...");
+                    try {
+                        await window.ethereum.request({
+                            method: 'wallet_switchEthereumChain',
+                            params: [{ chainId: web3.utils.toHex(DESIRED_NETWORK_ID) }],
+                        });
+                        console.log("Red cambiada a Ethereum Mainnet");
+                    } catch (switchError) {
+                        console.error("Error al cambiar de red:", switchError);
+                        if (switchError.code === 4902) {
+                            updateStatus("La red Ethereum Mainnet no está en MetaMask. Por favor agrégala manualmente.", true);
+                        } else {
+                            updateStatus(`Error al cambiar a Ethereum Mainnet: ${switchError.message}`, true);
+                        }
+                        return;
+                    }
                 }
+
+                // Escuchar cambios de cuenta
+                window.ethereum.on('accountsChanged', async (accounts) => {
+                    console.log("Cambio de cuenta detectado:", accounts);
+                    if (accounts.length === 0) {
+                        account = null;
+                        document.getElementById('account').innerText = "No conectado";
+                        updateStatus("Billetera desconectada", true);
+                        document.getElementById('stakeButton').disabled = true;
+                        document.getElementById('approvalStatus').innerText = "Conecta tu billetera para continuar";
+                    } else {
+                        account = accounts[0];
+                        document.getElementById('account').innerText = account;
+                        updateStatus("Cuenta cambiada: " + account.slice(0, 6) + "...");
+                        await updatePLPBalance();
+                        await updateStakesTable();
+                        await updateSPWRBalance();
+                        await checkAllowance();
+                    }
+                });
+
+                // Escuchar cambios de red
+                window.ethereum.on('chainChanged', () => {
+                    console.log("Cambio de red detectado, recargando página...");
+                    window.location.reload();
+                });
+
+                // Cargar precios y stakes generales
+                await updateTokenPrices();
+                await updateGeneralStakesTable();
+            } catch (error) {
+                console.error("Error durante la inicialización:", error);
+                updateStatus("Error al inicializar la aplicación: " + (error.message || "Desconocido"), true);
             }
-
-            window.ethereum.on('accountsChanged', async (accounts) => {
-                if (accounts.length === 0) {
-                    account = null;
-                    document.getElementById('account').innerText = "No conectado";
-                    updateStatus("Billetera desconectada", true);
-                    document.getElementById('stakeButton').disabled = true;
-                    document.getElementById('approvalStatus').innerText = "Conecta tu billetera para continuar";
-                } else {
-                    account = accounts[0];
-                    document.getElementById('account').innerText = account;
-                    updateStatus("Cuenta cambiada: " + account.slice(0, 6) + "...");
-                    await updatePLPBalance();
-                    await updateStakesTable();
-                    await updateSPWRBalance();
-                    await checkAllowance();
-                }
-            });
-
-            window.ethereum.on('chainChanged', () => {
-                window.location.reload();
-            });
-
-            await updateTokenPrices();
-            await updateGeneralStakesTable();
         }
 
         async function updateTokenPrices() {
             try {
-                // Obtener precio de PLP
                 const plpResponse = await fetch(`https://api.dexscreener.com/latest/dex/tokens/${plpAddress}`);
                 if (!plpResponse.ok) throw new Error("Error al obtener el precio de PLP");
                 const plpData = await plpResponse.json();
@@ -380,22 +402,27 @@
                 }
                 document.getElementById('plpPrice').innerText = plpPrice;
 
-                // Obtener precio de PWR
-                const pwrResponse = await fetch(`https://api.dexscreener.com/latest/dex/tokens/${pwrAddress}`);
-                if (!pwrResponse.ok) throw new Error("Error al obtener el precio de PWR");
-                const pwrData = await pwrResponse.json();
-                let pwrPrice = "No disponible";
-                if (pwrData.pairs && pwrData.pairs.length > 0) {
-                    pwrPrice = parseFloat(pwrData.pairs[0].priceUsd).toFixed(4);
-                    pwrPriceUsd = parseFloat(pwrData.pairs[0].priceUsd);
-                } else {
-                    pwrPrice = "0.05";
+                try {
+                    const pwrResponse = await fetch(`https://api.dexscreener.com/latest/dex/tokens/${pwrAddress}`);
+                    if (!pwrResponse.ok) throw new Error("Error al obtener el precio de PWR");
+                    const pwrData = await pwrResponse.json();
+                    let pwrPrice = "No disponible";
+                    if (pwrData.pairs && pwrData.pairs.length > 0) {
+                        pwrPrice = parseFloat(pwrData.pairs[0].priceUsd).toFixed(4);
+                        pwrPriceUsd = parseFloat(pwrData.pairs[0].priceUsd);
+                    } else {
+                        pwrPrice = "0.05";
+                        pwrPriceUsd = 0.05;
+                        updateStatus("Precio de PWR no disponible en DexScreener, usando valor estático", true);
+                    }
+                    document.getElementById('pwrPrice').innerText = pwrPrice;
+                } catch (error) {
+                    console.error("Error al obtener precio de PWR:", error);
+                    document.getElementById('pwrPrice').innerText = "0.05";
                     pwrPriceUsd = 0.05;
-                    updateStatus("Precio de PWR no disponible en DexScreener, usando valor estático", true);
+                    updateStatus("Error al cargar precio de PWR, usando valor estático: " + error.message, true);
                 }
-                document.getElementById('pwrPrice').innerText = pwrPrice;
 
-                // Actualizar la calculadora con el nuevo precio de PWR
                 updateYieldEstimate();
             } catch (error) {
                 console.error("Error al obtener precios de DexScreener:", error);
@@ -409,16 +436,40 @@
 
         document.getElementById('connectWallet').addEventListener('click', async () => {
             try {
+                console.log("Intentando conectar billetera...");
+                if (!window.ethereum) {
+                    updateStatus("MetaMask no está instalado. Por favor instálalo desde https://metamask.io", true);
+                    console.error("MetaMask no está instalado");
+                    return;
+                }
+
+                // Solicitar conexión a MetaMask
                 const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+                if (accounts.length === 0) {
+                    updateStatus("No se seleccionó ninguna cuenta. Por favor selecciona una cuenta en MetaMask.", true);
+                    console.error("No se seleccionó ninguna cuenta");
+                    return;
+                }
+
                 account = accounts[0];
                 document.getElementById('account').innerText = account;
                 updateStatus("Billetera conectada: " + account.slice(0, 6) + "...");
+                console.log("Billetera conectada:", account);
+
+                // Actualizar datos después de conectar
                 await updatePLPBalance();
                 await updateStakesTable();
                 await updateSPWRBalance();
                 await checkAllowance();
             } catch (error) {
-                updateStatus("Error al conectar: " + (error.message || "Desconocido"), true);
+                console.error("Error al conectar la billetera:", error);
+                if (error.code === 4001) {
+                    updateStatus("Conexión rechazada por el usuario. Por favor acepta la conexión en MetaMask.", true);
+                } else if (error.code === -32002) {
+                    updateStatus("Ya hay una solicitud pendiente en MetaMask. Por favor revisa la extensión.", true);
+                } else {
+                    updateStatus("Error al conectar la billetera: " + (error.message || "Desconocido"), true);
+                }
             }
         });
 
@@ -483,6 +534,7 @@
                 await updateTokenPrices();
                 await checkAllowance();
             } catch (error) {
+                console.error("Error al stakear:", error);
                 updateStatus("Error al stakear: " + (error.message || "Transacción fallida"), true);
             }
         });
@@ -650,6 +702,7 @@
                 await updateSPWRBalance();
                 await updateTokenPrices();
             } catch (error) {
+                console.error("Error al unstakear:", error);
                 updateStatus("Error al unstakear: " + (error.message || "Transacción fallida"), true);
             }
         }
