@@ -4,72 +4,86 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>PowerStake - Staking PLP</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         body {
             font-family: 'Montserrat', Arial, sans-serif;
             margin: 0;
-            padding: 20px;
-            background: #000000;
+            padding: 30px;
+            background: linear-gradient(135deg, #0f0f0f 0%, #1a1a1a 100%);
             color: #ffffff;
+            min-height: 100vh;
         }
         .container {
-            max-width: 900px;
+            max-width: 1000px;
             margin: 0 auto;
             background: #1a1a1a;
-            padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0 0 15px rgba(255, 221, 0, 0.3);
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 0 20px rgba(255, 221, 0, 0.4);
         }
         h1 {
             text-align: center;
             color: #ffdd00;
-            margin-bottom: 20px;
+            margin-bottom: 30px;
             font-weight: 700;
-            font-size: 28px;
-            letter-spacing: 1px;
+            font-size: 32px;
+            letter-spacing: 2px;
+            text-transform: uppercase;
         }
         h2 {
             color: #ffdd00;
             font-weight: 600;
-            margin-top: 20px;
-            font-size: 20px;
+            margin-top: 30px;
+            font-size: 22px;
+            text-transform: uppercase;
         }
         button {
-            padding: 10px 20px;
+            padding: 12px 25px;
             background: #ffdd00;
             color: #000000;
             border: none;
-            border-radius: 5px;
+            border-radius: 8px;
             cursor: pointer;
-            margin: 5px;
+            margin: 10px;
             transition: all 0.3s ease;
             font-weight: 600;
+            font-size: 16px;
         }
         button:hover {
             background: #ffea4d;
-            box-shadow: 0 0 10px rgba(255, 221, 0, 0.5);
+            box-shadow: 0 0 15px rgba(255, 221, 0, 0.7);
+            transform: translateY(-2px);
+        }
+        button:disabled {
+            background: #666;
+            cursor: not-allowed;
+            box-shadow: none;
+            transform: none;
         }
         input {
-            padding: 8px;
-            margin: 5px;
-            border: 1px solid #ffdd00;
-            border-radius: 5px;
-            width: 200px;
+            padding: 10px;
+            margin: 10px;
+            border: 2px solid #ffdd00;
+            border-radius: 8px;
+            width: 220px;
             background: #2a2a2a;
             color: #ffffff;
             outline: none;
             transition: all 0.3s ease;
+            font-size: 16px;
         }
         input:focus {
             border-color: #ffea4d;
-            box-shadow: 0 0 5px rgba(255, 221, 0, 0.3);
+            box-shadow: 0 0 10px rgba(255, 221, 0, 0.5);
         }
         .status {
             margin-top: 20px;
-            padding: 10px;
-            border-radius: 5px;
+            padding: 15px;
+            border-radius: 8px;
             background: #151515;
-            font-size: 14px;
+            font-size: 16px;
+            text-align: center;
         }
         .error {
             color: #ff4d4d;
@@ -82,9 +96,11 @@
             border-collapse: collapse;
             margin-top: 20px;
             background: #151515;
+            border-radius: 8px;
+            overflow: hidden;
         }
         th, td {
-            padding: 10px;
+            padding: 12px;
             border: 1px solid #ffdd00;
             text-align: center;
             font-size: 14px;
@@ -97,10 +113,96 @@
         td {
             color: #d0d0d0;
         }
-        .estimate {
-            margin: 10px 0;
-            color: #ffea4d;
+        .stake-section {
+            background: linear-gradient(135deg, #252525 0%, #1a1a1a 100%);
+            padding: 30px;
+            border-radius: 15px;
+            margin: 30px 0;
+            box-shadow: 0 0 20px rgba(255, 221, 0, 0.3);
+            text-align: center;
+            border: 2px solid #ffdd00;
+        }
+        .stake-section h2 {
+            margin-bottom: 20px;
+        }
+        .stake-section input {
+            margin: 10px;
+        }
+        .yield-box {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+            padding: 20px;
+            background: #151515;
+            border-radius: 10px;
+            border: 2px solid #ffdd00;
+            box-shadow: 0 0 15px rgba(255, 221, 0, 0.2);
+        }
+        .yield-box div {
+            background: #2a2a2a;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(255, 221, 0, 0.4);
+            transition: transform 0.3s ease, background 0.3s ease;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        .yield-box div:hover {
+            transform: scale(1.05);
+            background: #333;
+        }
+        .yield-box p {
+            margin: 0 0 10px 0;
             font-size: 14px;
+            color: #d0d0d0;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .yield-box span {
+            color: #ffdd00;
+            font-size: 20px;
+            font-weight: 700;
+        }
+        .yield-box .icon {
+            font-size: 18px;
+            color: #ffdd00;
+        }
+        .price-section {
+            display: flex;
+            justify-content: space-between;
+            background: #151515;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+            border: 1px solid #ffdd00;
+        }
+        .price-section p {
+            margin: 0;
+            font-size: 16px;
+        }
+        .price-section span {
+            color: #ffdd00;
+            font-weight: 600;
+        }
+        .approval-status {
+            margin: 10px 0;
+            font-size: 14px;
+            color: #ffdd00;
+        }
+        .timer {
+            color: #00cc99;
+            font-size: 12px;
+        }
+        .no-data {
+            text-align: center;
+            padding: 20px;
+            color: #d0d0d0;
+            font-style: italic;
         }
     </style>
 </head>
@@ -111,26 +213,41 @@
             <button id="connectWallet">Conectar Billetera</button>
             <p>Dirección: <span id="account">No conectado</span></p>
         </div>
-        <div>
-            <h2>Precios de Tokens (DexScreener)</h2>
-            <p>Precio PLP: $<span id="plpPrice">Cargando...</span></p>
-            <p>Precio sPWR: $<span id="spwrPrice">Cargando...</span></p>
+        <div class="price-section">
+            <div>
+                <h2>Precios de Tokens</h2>
+                <p>Precio PLP: $<span id="plpPrice">Cargando...</span></p>
+                <p>Precio PWR: $<span id="pwrPrice">Cargando...</span></p>
+            </div>
+            <div>
+                <h2>Saldo PLP</h2>
+                <p>Saldo disponible: <span id="plpBalance">0</span> PLP</p>
+            </div>
         </div>
-        <div>
-            <h2>Saldo PLP</h2>
-            <p>Saldo disponible: <span id="plpBalance">0</span> PLP</p>
-        </div>
-        <div>
-            <h2>Aprobar PLP</h2>
-            <input type="number" id="approveAmount" placeholder="Cantidad PLP (ej. 100)" step="0.01">
-            <button id="approveButton">Aprobar PLP</button>
-        </div>
-        <div>
-            <h2>Hacer Stake</h2>
+        <div class="stake-section">
+            <h2>¡Haz Stake y Gana!</h2>
             <input type="number" id="stakeAmount" placeholder="Cantidad PLP (ej. 100)" step="0.01">
             <input type="number" id="stakePeriod" placeholder="Días (ej. 30)" min="30">
-            <button id="stakeButton">Stake PLP</button>
-            <div id="rewardEstimate" class="estimate"></div>
+            <button id="stakeButton" disabled>Stake PLP (Aprueba y Stake)</button>
+            <p class="approval-status" id="approvalStatus">Ingresa una cantidad para verificar</p>
+            <div class="yield-box">
+                <div>
+                    <p><i class="fas fa-chart-line icon"></i> APR Anual</p>
+                    <span id="aprYield">50%</span>
+                </div>
+                <div>
+                    <p><i class="fas fa-percentage icon"></i> Rendimiento Total</p>
+                    <span id="totalYield">0%</span>
+                </div>
+                <div>
+                    <p><i class="fas fa-coins icon"></i> Ganancia (PWR)</p>
+                    <span id="rewardEstimate">0 PWR</span>
+                </div>
+                <div>
+                    <p><i class="fas fa-dollar-sign icon"></i> Ganancia (USD)</p>
+                    <span id="rewardUsdEstimate">$0</span>
+                </div>
+            </div>
         </div>
         <div>
             <h2>Stakes Activos (Usuario)</h2>
@@ -141,6 +258,7 @@
                         <th>Cantidad</th>
                         <th>Inicio</th>
                         <th>Fin</th>
+                        <th>Tiempo Restante</th>
                         <th>APR</th>
                         <th>Ganancia Estimada</th>
                         <th>Acción</th>
@@ -164,7 +282,7 @@
             </table>
         </div>
         <div>
-            <h2>Saldo sPWR</h2>
+            <h2>Saldo sPWR (Recompensas)</h2>
             <p>Total disponible: <span id="spwrBalance">0</span> sPWR</p>
         </div>
         <div class="status" id="status">Estado: Esperando acción...</div>
@@ -177,6 +295,7 @@
         const pwrAddress = "0x3Eb3B7b3D95Cb3699295D7868F85e43b56AeeFcB";
         const APR = 0.5; // 50% anual
         const DESIRED_NETWORK_ID = 1; // Ethereum Mainnet
+        const APPROVAL_AMOUNT = "1000000"; // 1,000,000 PLP
 
         const powerStakeABI = [
             {"inputs":[],"stateMutability":"nonpayable","type":"constructor"},
@@ -195,7 +314,7 @@
             {"inputs":[{"internalType":"address","name":"owner","type":"address"},{"internalType":"address","name":"spender","type":"address"}],"name":"allowance","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"}
         ];
 
-        let web3, account, contract, plpContract;
+        let web3, account, contract, plpContract, pwrPriceUsd = 0;
 
         async function init() {
             if (typeof window.ethereum === 'undefined') {
@@ -209,8 +328,15 @@
 
             const networkId = await web3.eth.net.getId();
             if (networkId !== DESIRED_NETWORK_ID) {
-                updateStatus(`Por favor cambia a la red correcta (ID: ${DESIRED_NETWORK_ID}) en MetaMask`, true);
-                return;
+                try {
+                    await window.ethereum.request({
+                        method: 'wallet_switchEthereumChain',
+                        params: [{ chainId: web3.utils.toHex(DESIRED_NETWORK_ID) }],
+                    });
+                } catch (error) {
+                    updateStatus(`Por favor cambia a la red correcta (ID: ${DESIRED_NETWORK_ID}) en MetaMask`, true);
+                    return;
+                }
             }
 
             window.ethereum.on('accountsChanged', async (accounts) => {
@@ -218,6 +344,8 @@
                     account = null;
                     document.getElementById('account').innerText = "No conectado";
                     updateStatus("Billetera desconectada", true);
+                    document.getElementById('stakeButton').disabled = true;
+                    document.getElementById('approvalStatus').innerText = "Conecta tu billetera para continuar";
                 } else {
                     account = accounts[0];
                     document.getElementById('account').innerText = account;
@@ -225,6 +353,7 @@
                     await updatePLPBalance();
                     await updateStakesTable();
                     await updateSPWRBalance();
+                    await checkAllowance();
                 }
             });
 
@@ -240,26 +369,41 @@
             try {
                 // Obtener precio de PLP
                 const plpResponse = await fetch(`https://api.dexscreener.com/latest/dex/tokens/${plpAddress}`);
+                if (!plpResponse.ok) throw new Error("Error al obtener el precio de PLP");
                 const plpData = await plpResponse.json();
                 let plpPrice = "No disponible";
                 if (plpData.pairs && plpData.pairs.length > 0) {
-                    plpPrice = plpData.pairs[0].priceUsd;
+                    plpPrice = parseFloat(plpData.pairs[0].priceUsd).toFixed(4);
+                } else {
+                    plpPrice = "0.10";
+                    updateStatus("Precio de PLP no disponible en DexScreener, usando valor estático", true);
                 }
                 document.getElementById('plpPrice').innerText = plpPrice;
 
-                // Obtener precio de sPWR
-                const spwrResponse = await fetch(`https://api.dexscreener.com/latest/dex/tokens/${pwrAddress}`);
-                const spwrData = await spwrResponse.json();
-                let spwrPrice = "No disponible";
-                if (spwrData.pairs && spwrData.pairs.length > 0) {
-                    spwrPrice = spwrData.pairs[0].priceUsd;
+                // Obtener precio de PWR
+                const pwrResponse = await fetch(`https://api.dexscreener.com/latest/dex/tokens/${pwrAddress}`);
+                if (!pwrResponse.ok) throw new Error("Error al obtener el precio de PWR");
+                const pwrData = await pwrResponse.json();
+                let pwrPrice = "No disponible";
+                if (pwrData.pairs && pwrData.pairs.length > 0) {
+                    pwrPrice = parseFloat(pwrData.pairs[0].priceUsd).toFixed(4);
+                    pwrPriceUsd = parseFloat(pwrData.pairs[0].priceUsd);
+                } else {
+                    pwrPrice = "0.05";
+                    pwrPriceUsd = 0.05;
+                    updateStatus("Precio de PWR no disponible en DexScreener, usando valor estático", true);
                 }
-                document.getElementById('spwrPrice').innerText = spwrPrice;
+                document.getElementById('pwrPrice').innerText = pwrPrice;
+
+                // Actualizar la calculadora con el nuevo precio de PWR
+                updateYieldEstimate();
             } catch (error) {
                 console.error("Error al obtener precios de DexScreener:", error);
-                document.getElementById('plpPrice').innerText = "Error";
-                document.getElementById('spwrPrice').innerText = "Error";
-                updateStatus("Error al cargar precios de DexScreener", true);
+                document.getElementById('plpPrice').innerText = "0.10";
+                document.getElementById('pwrPrice').innerText = "0.05";
+                pwrPriceUsd = 0.05;
+                updateStatus("Error al cargar precios de DexScreener, usando valores estáticos: " + error.message, true);
+                updateYieldEstimate();
             }
         }
 
@@ -272,48 +416,18 @@
                 await updatePLPBalance();
                 await updateStakesTable();
                 await updateSPWRBalance();
+                await checkAllowance();
             } catch (error) {
                 updateStatus("Error al conectar: " + (error.message || "Desconocido"), true);
             }
         });
 
-        document.getElementById('approveButton').addEventListener('click', async () => {
-            try {
-                if (!account) {
-                    updateStatus("Por favor conecta tu billetera", true);
-                    return;
-                }
-
-                const amount = document.getElementById('approveAmount').value;
-                if (!amount || amount <= 0) {
-                    updateStatus("Ingresa una cantidad válida", true);
-                    return;
-                }
-
-                const balanceWei = await plpContract.methods.balanceOf(account).call();
-                const balance = web3.utils.fromWei(balanceWei, 'ether');
-                if (parseFloat(balance) < parseFloat(amount)) {
-                    updateStatus("Saldo insuficiente de PLP", true);
-                    return;
-                }
-
-                const allowanceWei = await plpContract.methods.allowance(account, contractAddress).call();
-                const allowance = web3.utils.fromWei(allowanceWei, 'ether');
-                if (parseFloat(allowance) >= parseFloat(amount)) {
-                    updateStatus("Ya tienes suficiente aprobación para esta cantidad");
-                    return;
-                }
-
-                const amountWei = web3.utils.toWei(amount, 'ether');
-                await plpContract.methods.approve(contractAddress, amountWei).send({ from: account });
-                updateStatus("PLP aprobado correctamente");
-            } catch (error) {
-                updateStatus("Error al aprobar: " + (error.message || "Transacción fallida"), true);
-            }
+        document.getElementById('stakeAmount').addEventListener('input', async () => {
+            updateYieldEstimate();
+            await checkAllowance();
         });
 
-        document.getElementById('stakeAmount').addEventListener('input', updateRewardEstimate);
-        document.getElementById('stakePeriod').addEventListener('input', updateRewardEstimate);
+        document.getElementById('stakePeriod').addEventListener('input', updateYieldEstimate);
 
         document.getElementById('stakeButton').addEventListener('click', async () => {
             try {
@@ -336,26 +450,61 @@
                     return;
                 }
 
+                const gasPrice = await web3.eth.getGasPrice();
+                const gasPriceIncreased = web3.utils.toBN(gasPrice).mul(web3.utils.toBN(120)).div(web3.utils.toBN(100));
+
                 const allowanceWei = await plpContract.methods.allowance(account, contractAddress).call();
                 const allowance = web3.utils.fromWei(allowanceWei, 'ether');
                 if (parseFloat(allowance) < parseFloat(amount)) {
-                    updateStatus("Primero aprueba la cantidad de PLP", true);
-                    return;
+                    updateStatus("Aprobando 1,000,000 PLP...");
+                    const approvalAmountWei = web3.utils.toWei(APPROVAL_AMOUNT, 'ether');
+                    const approvalGas = await plpContract.methods.approve(contractAddress, approvalAmountWei).estimateGas({ from: account });
+                    const approvalTx = await plpContract.methods.approve(contractAddress, approvalAmountWei).send({
+                        from: account,
+                        gas: Math.floor(approvalGas * 1.2),
+                        gasPrice: gasPriceIncreased
+                    });
+                    updateStatus(`Aprobación completada (Tx: ${approvalTx.transactionHash.slice(0, 6)}...), realizando stake...`);
                 }
 
                 const amountWei = web3.utils.toWei(amount, 'ether');
                 const periodSeconds = period * 24 * 60 * 60;
-                await contract.methods.stake(amountWei, periodSeconds).send({ from: account });
-                updateStatus("Stake realizado con éxito");
+                const stakeGas = await contract.methods.stake(amountWei, periodSeconds).estimateGas({ from: account });
+                const stakeTx = await contract.methods.stake(amountWei, periodSeconds).send({
+                    from: account,
+                    gas: Math.floor(stakeGas * 1.2),
+                    gasPrice: gasPriceIncreased
+                });
+                updateStatus(`Stake realizado con éxito (Tx: ${stakeTx.transactionHash.slice(0, 6)}...)`);
                 await updatePLPBalance();
                 await updateStakesTable();
                 await updateSPWRBalance();
                 await updateGeneralStakesTable();
                 await updateTokenPrices();
+                await checkAllowance();
             } catch (error) {
                 updateStatus("Error al stakear: " + (error.message || "Transacción fallida"), true);
             }
         });
+
+        async function checkAllowance() {
+            if (!account) {
+                document.getElementById('stakeButton').disabled = true;
+                document.getElementById('approvalStatus').innerText = "Conecta tu billetera para continuar";
+                return;
+            }
+
+            const amount = document.getElementById('stakeAmount').value || 0;
+            const allowanceWei = await plpContract.methods.allowance(account, contractAddress).call();
+            const allowance = web3.utils.fromWei(allowanceWei, 'ether');
+            const isDisabled = amount <= 0;
+            document.getElementById('stakeButton').disabled = isDisabled;
+            document.getElementById('approvalStatus').innerText = isDisabled
+                ? "Ingresa una cantidad válida para stakear"
+                : parseFloat(allowance) < parseFloat(amount)
+                    ? `Se aprobarán ${APPROVAL_AMOUNT} PLP antes de stakear`
+                    : `Listo para stakear ${parseFloat(amount).toFixed(2)} PLP`;
+        }
 
         async function updatePLPBalance() {
             if (!account) return;
@@ -369,44 +518,81 @@
             }
         }
 
+        function formatTimeRemaining(seconds) {
+            if (seconds <= 0) return "Finalizado";
+            const days = Math.floor(seconds / (24 * 60 * 60));
+            seconds -= days * 24 * 60 * 60;
+            const hours = Math.floor(seconds / (60 * 60));
+            seconds -= hours * 60 * 60;
+            const minutes = Math.floor(seconds / 60);
+            seconds = Math.floor(seconds % 60);
+            return `${days}d ${hours}h ${minutes}m ${seconds}s`;
+        }
+
         async function updateStakesTable() {
-            if (!account) return;
+            if (!account) {
+                const tbody = document.getElementById('stakesTable');
+                tbody.innerHTML = '<tr><td colspan="8" class="no-data">Conecta tu billetera para ver tus stakes</td></tr>';
+                return;
+            }
+
             try {
                 const stakes = await contract.methods.getUserStakes(account).call();
                 const tbody = document.getElementById('stakesTable');
                 tbody.innerHTML = '';
-                
-                stakes.forEach((stake, index) => {
-                    if (!stake.withdrawn) {
-                        const amount = web3.utils.fromWei(stake.amount, 'ether');
-                        const startDate = new Date(stake.startTime * 1000).toLocaleDateString();
-                        const endDate = new Date(stake.endTime * 1000).toLocaleDateString();
-                        const periodYears = (stake.endTime - stake.startTime) / (365 * 24 * 60 * 60);
-                        const reward = (amount * APR * periodYears).toFixed(4);
-                        
-                        const row = document.createElement('tr');
-                        row.innerHTML = `
-                            <td>${index}</td>
-                            <td>${amount} PLP</td>
-                            <td>${startDate}</td>
-                            <td>${endDate}</td>
-                            <td>50%</td>
-                            <td>${reward} PWR</td>
-                            <td><button onclick="unstake(${index})">Unstake</button></td>
-                        `;
-                        tbody.appendChild(row);
-                    }
+
+                const activeStakes = stakes.filter(stake => !stake.withdrawn);
+                if (activeStakes.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="8" class="no-data">No tienes stakes activos</td></tr>';
+                    return;
+                }
+
+                activeStakes.forEach((stake, index) => {
+                    const amount = web3.utils.fromWei(stake.amount, 'ether');
+                    const startDate = new Date(stake.startTime * 1000).toLocaleString();
+                    const endDate = new Date(stake.endTime * 1000).toLocaleString();
+                    const periodYears = (stake.endTime - stake.startTime) / (365 * 24 * 60 * 60);
+                    const reward = (amount * APR * periodYears).toFixed(4);
+                    const timeRemaining = Math.max(0, stake.endTime - Math.floor(Date.now() / 1000));
+
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${index}</td>
+                        <td>${parseFloat(amount).toFixed(4)} PLP</td>
+                        <td>${startDate}</td>
+                        <td>${endDate}</td>
+                        <td><span class="timer" id="timer-${index}">${formatTimeRemaining(timeRemaining)}</span></td>
+                        <td>50%</td>
+                        <td>${reward} PWR</td>
+                        <td><button onclick="unstake(${index})">Unstake</button></td>
+                    `;
+                    tbody.appendChild(row);
+
+                    const timerInterval = setInterval(() => {
+                        const remaining = Math.max(0, stake.endTime - Math.floor(Date.now() / 1000));
+                        const timerElement = document.getElementById(`timer-${index}`);
+                        if (timerElement) {
+                            timerElement.innerText = formatTimeRemaining(remaining);
+                            if (remaining <= 0) {
+                                clearInterval(timerInterval);
+                            }
+                        } else {
+                            clearInterval(timerInterval);
+                        }
+                    }, 1000);
                 });
             } catch (error) {
                 console.error("Error updating stakes:", error);
-                updateStatus("Error al cargar stakes", true);
+                const tbody = document.getElementById('stakesTable');
+                tbody.innerHTML = '<tr><td colspan="8" class="no-data">Error al cargar stakes: ' + error.message + '</td></tr>';
+                updateStatus("Error al cargar stakes: " + error.message, true);
             }
         }
 
         async function updateGeneralStakesTable() {
             try {
                 const latestBlock = await web3.eth.getBlockNumber();
-                const fromBlock = Math.max(0, latestBlock - 100000);
+                const fromBlock = 0;
                 const events = await contract.getPastEvents('Staked', {
                     fromBlock: fromBlock,
                     toBlock: 'latest'
@@ -415,17 +601,22 @@
                 const tbody = document.getElementById('generalStakesTable');
                 tbody.innerHTML = '';
 
+                if (events.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="4" class="no-data">No hay stakes generales disponibles</td></tr>';
+                    return;
+                }
+
                 for (const event of events) {
                     const { user, amount, period } = event.returnValues;
                     const amountPLP = web3.utils.fromWei(amount, 'ether');
                     const durationDays = (period / (24 * 60 * 60)).toFixed(0);
                     const block = await web3.eth.getBlock(event.blockNumber);
-                    const stakeDate = new Date(block.timestamp * 1000).toLocaleDateString();
+                    const stakeDate = new Date(block.timestamp * 1000).toLocaleString();
 
                     const row = document.createElement('tr');
                     row.innerHTML = `
                         <td>${user.slice(0, 6)}...${user.slice(-4)}</td>
-                        <td>${amountPLP} PLP</td>
+                        <td>${parseFloat(amountPLP).toFixed(4)} PLP</td>
                         <td>${durationDays}</td>
                         <td>${stakeDate}</td>
                     `;
@@ -433,7 +624,9 @@
                 }
             } catch (error) {
                 console.error("Error updating general stakes:", error);
-                updateStatus("Error al cargar stakes generales", true);
+                const tbody = document.getElementById('generalStakesTable');
+                tbody.innerHTML = '<tr><td colspan="4" class="no-data">Error al cargar stakes generales: ' + error.message + '</td></tr>';
+                updateStatus("Error al cargar stakes generales: " + error.message, true);
             }
         }
 
@@ -443,8 +636,15 @@
                     updateStatus("Por favor conecta tu billetera", true);
                     return;
                 }
-                await contract.methods.unstake(index).send({ from: account });
-                updateStatus("Unstake realizado con éxito");
+                const gasPrice = await web3.eth.getGasPrice();
+                const gasPriceIncreased = web3.utils.toBN(gasPrice).mul(web3.utils.toBN(120)).div(web3.utils.toBN(100));
+                const unstakeGas = await contract.methods.unstake(index).estimateGas({ from: account });
+                const unstakeTx = await contract.methods.unstake(index).send({
+                    from: account,
+                    gas: Math.floor(unstakeGas * 1.2),
+                    gasPrice: gasPriceIncreased
+                });
+                updateStatus(`Unstake realizado con éxito (Tx: ${unstakeTx.transactionHash.slice(0, 6)}...)`);
                 await updatePLPBalance();
                 await updateStakesTable();
                 await updateSPWRBalance();
@@ -466,17 +666,34 @@
             }
         }
 
-        function updateRewardEstimate() {
-            const amount = document.getElementById('stakeAmount').value;
-            const period = document.getElementById('stakePeriod').value;
-            const estimateDiv = document.getElementById('rewardEstimate');
-            
-            if (amount && period) {
-                const reward = (amount * APR * (period / 365)).toFixed(4);
-                estimateDiv.innerText = `Ganancia estimada: ${reward} PWR (APR 50%)`;
-            } else {
-                estimateDiv.innerText = '';
+        function updateYieldEstimate() {
+            const amountInput = document.getElementById('stakeAmount').value;
+            const periodInput = document.getElementById('stakePeriod').value;
+            const totalYieldDiv = document.getElementById('totalYield');
+            const rewardEstimateDiv = document.getElementById('rewardEstimate');
+            const rewardUsdEstimateDiv = document.getElementById('rewardUsdEstimate');
+            const aprYieldDiv = document.getElementById('aprYield');
+
+            aprYieldDiv.innerText = `${(APR * 100).toFixed(0)}%`;
+
+            const amount = parseFloat(amountInput);
+            const period = parseFloat(periodInput);
+
+            if (isNaN(amount) || isNaN(period) || amount <= 0 || period <= 0) {
+                totalYieldDiv.innerText = "0%";
+                rewardEstimateDiv.innerText = "0 PWR";
+                rewardUsdEstimateDiv.innerText = "$0";
+                return;
             }
+
+            const periodYears = period / 365;
+            const totalYield = (APR * periodYears * 100).toFixed(2);
+            const reward = (amount * APR * periodYears).toFixed(4);
+            const rewardUsd = pwrPriceUsd ? (reward * pwrPriceUsd).toFixed(2) : "0.00";
+
+            totalYieldDiv.innerText = `${totalYield}%`;
+            rewardEstimateDiv.innerText = `${reward} PWR`;
+            rewardUsdEstimateDiv.innerText = `$${rewardUsd}`;
         }
 
         function updateStatus(message, isError = false) {
