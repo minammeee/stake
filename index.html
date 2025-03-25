@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PowerStake - Dominate the Market</title>
+  <style>
+    body {
+      background: #1a1a1a;
+      color: #ffd700;
+      font-family: 'Impact', 'Arial Narrow', sans-serif;
+      margin: 0;
+      padding: 20px;
+      text-transform: uppercase;
+    }
+    h1 {
+      font-size: 3em;
+      text-shadow: 0 0 10px #ffd700, 0 0 20px #ff0000;
+      text-align: center;
+    }
+    h2 {
+      font-size: 2em;
+      color: #ff0000;
+      text-shadow: 0 0 5px #ffd700;
+    }
+    button {
+      background: #ffd700;
+      color: #1a1a1a;
+      border: none;
+      padding: 15px 30px;
+      font-size: 1.2em;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      box-shadow: 0 0 10px #ffd700;
+    }
+    button:hover {
+      background: #ff0000;
+      color: #ffd700;
+      box-shadow: 0 0 20px #ff0000;
+    }
+    input, select {
+      background: #333;
+      color: #ffd700;
+      border: 2px solid #ffd700;
+      padding: 10px;
+      font-size: 1.1em;
+      margin: 10px 0;
+    }
+    #status {
+      color: #ff0000;
+      font-size: 1.2em;
+      text-shadow: 0 0 5px #ff0000;
+      word-wrap: break-word;
+    }
+    #dashboard {
+      background: #222;
+      padding: 20px;
+      border: 2px solid #ffd700;
+      box-shadow: 0 0 15px #ffd700;
+      margin-bottom: 20px;
+    }
+    .section {
+      margin: 20px 0;
+      padding: 15px;
+      background: #2a2a2a;
+      border-left: 5px solid #ff0000;
+    }
+  </style>
+</head>
+<body>
+  <h1>PowerStake - Crush the Game</h1>
+  <div id="dashboard">
+    <div id="account">Awaiting Connection...</div>
+    <div id="balances">
+      PLP Power: <span id="plpBalance">0</span><br>
+      PWR Arsenal: <span id="pwrBalance">0</span><br>
+      Contract Vault: <span id="pwrContractBalance">0</span><br>
+      APR Strike: <span id="currentAPR">0</span>%<br>
+      PWR Unleashed: <span id="pwrDistributed">0</span><br>
+      Rewards Active: <span id="rewardsActivated">No</span><br>
+      First Month Locked: <span id="firstMonthInitialized">No</span>
+    </div>
+  </div>
+  <div id="status"></div>
+
+  <div class="section">
+    <h2>Load the Vault (PWR)</h2>
+    <input type="number" id="pwrAmount" placeholder="PWR TO DEPLOY" step="0.01">
+    <button onclick="transferPWR()">Unleash PWR</button>
+    <button onclick="forceInit()">Force First Strike</button>
+  </div>
+
+  <div class="section">
+    <h2>Stake Your Claim (PLP)</h2>
+    <input type="number" id="plpAmount" placeholder="PLP TO LOCK" step="0.01">
+    <button onclick="approvePLP()">Authorize PLP</button>
+    <select id="durationIndex">
+      <option value="0">30 Days - No Bonus</option>
+      <option value="1">60 Days - 10% Boost</option>
+      <option value="2">90 Days - 20% Boost</option>
+      <option value="3">180 Days - 40% Boost</option>
+      <option value="4">360 Days - 80% Boost</option>
+    </select>
+    <button onclick="stakePLP()">Lock & Load</button>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/web3@1.7.4/dist/web3.min.js"></script>
+  <script>
+    // Configuración
+    const powerStakeAddress = "0xAF9A84aa22d1dcdfc38d26B205120d5E89c5D908"; // Dirección del contrato desplegado
+    const plpTokenAddress = "0xe5c56E4a8F8d96e3A91b18D83b7f0c36663C9a74"; // PLP
+    const pwrTokenAddress = "0x3Eb3B7b3D95Cb3699295D7868F85e43b56AeeFcB"; // PWR
+    const powerStakeABI = [
+      {
+        "inputs": [
+          {"internalType": "uint256", "name": "plpAmount", "type": "uint256"},
+          {"internalType": "uint256", "name": "durationIndex", "type": "uint256"}
+        ],
+        "name": "stakePLP",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+      },
+      {
+        "inputs": [],
+        "name": "initializeFirstMonth",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+      },
+      {
+        "inputs": [],
+        "name": "getPWRBalance",
+        "outputs": [{"internalType": "uint256", "name": "", "type": "uint256"}],
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "inputs": [],
+        "name": "currentAPR",
+        "outputs": [{"internalType": "uint256", "name": "", "type": "uint256"}],
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "inputs": [],
+        "name": "pwrDistributed",
+        "outputs": [{"internalType": "uint256", "name": "", "type": "uint256"}],
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "inputs": [],
+        "name": "rewardsActivated",
+        "outputs": [{"internalType": "bool", "name": "", "type": "bool"}],
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "inputs": [],
+        "name": "firstMonthInitialized",
+        "outputs": [{"internalType": "bool", "name": "", "type": "bool"}],
+        "stateMutability": "view",
+        "type": "function"
+      }
+    ];
+    const erc20ABI = [
+      {
+        "constant": false,
+        "inputs": [
+          {"name": "to", "type": "address"},
+          {"name": "amount", "type": "uint256"}
+        ],
+        "name": "transfer",
+        "outputs": [{"name": "", "type": "bool"}],
+        "type": "function"
+      },
+      {
+        "constant": false,
+        "inputs": [
+          {"name": "spender", "type": "address"},
+          {"name": "amount", "type": "uint256"}
+        ],
+        "name": "approve",
+        "outputs": [{"name": "", "type": "bool"}],
+        "type": "function"
+      },
+      {
+        "constant": true,
+        "inputs": [{"name": "account", "type": "address"}],
+        "name": "balanceOf",
+        "outputs": [{"name": "", "type": "uint256"}],
+        "type": "function"
+      }
+    ];
+
+    let web3;
+    let powerStakeContract;
+    let plpContract;
+    let pwrContract;
+    let account;
+
+    // Inicialización
+    window.addEventListener('load', async () => {
+      if (window.ethereum) {
+        web3 = new Web3(window.ethereum);
+        try {
+          await window.ethereum.request({ method: 'eth_requestAccounts' });
+          const accounts = await web3.eth.getAccounts();
+          account = accounts[0];
+          document.getElementById('account').innerText = `Commander: ${account}`;
+
+          powerStakeContract = new web3.eth.Contract(powerStakeABI, powerStakeAddress);
+          plpContract = new web3.eth.Contract(erc20ABI, plpTokenAddress);
+          pwrContract = new web3.eth.Contract(erc20ABI, pwrTokenAddress);
+
+          await updateDashboard();
+        } catch (error) {
+          document.getElementById('status').innerText = `SYSTEM FAILURE: ${String(error)}`;
+          console.error(error);
+        }
+      } else {
+        document.getElementById('status').innerText = "INSTALL METAMASK TO DOMINATE!";
+      }
+    });
+
+    async function updateDashboard() {
+      const plpBalance = await plpContract.methods.balanceOf(account).call();
+      document.getElementById('plpBalance').innerText = web3.utils.fromWei(plpBalance, 'ether');
+      const pwrBalance = await pwrContract.methods.balanceOf(account).call();
+      document.getElementById('pwrBalance').innerText = web3.utils.fromWei(pwrBalance, 'ether');
+      const pwrContractBalance = await powerStakeContract.methods.getPWRBalance().call();
+      document.getElementById('pwrContractBalance').innerText = web3.utils.fromWei(pwrContractBalance, 'ether');
+      const apr = await powerStakeContract.methods.currentAPR().call();
+      document.getElementById('currentAPR').innerText = apr;
+      const pwrDistributed = await powerStakeContract.methods.pwrDistributed().call();
+      document.getElementById('pwrDistributed').innerText = web3.utils.fromWei(pwrDistributed, 'ether');
+      const rewardsActivated = await powerStakeContract.methods.rewardsActivated().call();
+      document.getElementById('rewardsActivated').innerText = rewardsActivated ? "ARMED" : "UNARMED";
+      const firstMonthInitialized = await powerStakeContract.methods.firstMonthInitialized().call();
+      document.getElementById('firstMonthInitialized').innerText = firstMonthInitialized ? "LOCKED" : "UNLOCKED";
+    }
+
+    // Transferir PWR directamente
+    async function transferPWR() {
+      const amount = document.getElementById('pwrAmount').value;
+      if (!amount || amount <= 0) {
+        document.getElementById('status').innerText = "DEPLOY REAL POWER!";
+        return;
+      }
+
+      const weiAmount = web3.utils.toWei(amount.toString(), 'ether');
+      document.getElementById('status').innerText = "UNLEASHING PWR...";
+
+      try {
+        const balance = await pwrContract.methods.balanceOf(account).call();
+        if (parseInt(balance) < parseInt(weiAmount)) {
+          document.getElementById('status').innerText = "INSUFFICIENT PWR ARSENAL!";
+          return;
+        }
+
+        const tx = await pwrContract.methods.transfer(powerStakeAddress, weiAmount).send({ from: account });
+        document.getElementById('status').innerText = `PWR DEPLOYED! TX HASH: ${tx.transactionHash}`;
+        await updateDashboard();
+
+        const rewardsActive = await powerStakeContract.methods.rewardsActivated().call();
+        if (!rewardsActive) {
+          document.getElementById('status').innerText += " - REWARDS STILL UNARMED! STAKE AS OWNER TO ACTIVATE!";
+        }
+      } catch (error) {
+        document.getElementById('status').innerText = `DEPLOYMENT FAILED: ${String(error.message || error)}`;
+        console.error(error);
+      }
+    }
+
+    // Forzar inicialización del primer mes
+    async function forceInit() {
+      document.getElementById('status').innerText = "FORCING FIRST STRIKE...";
+      try {
+        const initialized = await powerStakeContract.methods.firstMonthInitialized().call();
+        if (initialized) {
+          document.getElementById('status').innerText = "ALREADY LOCKED!";
+          return;
+        }
+
+        const pwrBalance = await pwrContract.methods.balanceOf(account).call();
+        const requiredPWR = web3.utils.toWei("1000", 'ether');
+        if (parseInt(pwrBalance) < parseInt(requiredPWR)) {
+          document.getElementById('status').innerText = "NEED 1000 PWR TO LOCK!";
+          return;
+        }
+
+        const tx = await powerStakeContract.methods.initializeFirstMonth().send({ from: account });
+        document.getElementById('status').innerText = `FIRST STRIKE LOCKED! TX HASH: ${tx.transactionHash}`;
+        await updateDashboard();
+      } catch (error) {
+        document.getElementById('status').innerText = `FORCE FAILED: ${String(error.message || error)}`;
+        console.error(error);
+      }
+    }
+
+    // Aprobar PLP
+    async function approvePLP() {
+      const amount = document.getElementById('plpAmount').value;
+      if (!amount || amount <= 0) {
+        document.getElementById('status').innerText = "LOCK REAL PLP!";
+        return;
+      }
+
+      const weiAmount = web3.utils.toWei(amount.toString(), 'ether');
+      document.getElementById('status').innerText = "AUTHORIZING PLP...";
+
+      try {
+        const balance = await plpContract.methods.balanceOf(account).call();
+        if (parseInt(balance) < parseInt(weiAmount)) {
+          document.getElementById('status').innerText = "INSUFFICIENT PLP POWER!";
+          return;
+        }
+
+        const tx = await plpContract.methods.approve(powerStakeAddress, weiAmount).send({ from: account });
+        document.getElementById('status').innerText = `PLP AUTHORIZED! TX HASH: ${tx.transactionHash}`;
+      } catch (error) {
+        document.getElementById('status').innerText = `AUTH FAILED: ${String(error.message || error)}`;
+        console.error(error);
+      }
+    }
+
+    // Hacer stake PLP
+    async function stakePLP() {
+      const amount = document.getElementById('plpAmount').value;
+      const durationIndex = document.getElementById('durationIndex').value;
+      if (!amount || amount <= 0) {
+        document.getElementById('status').innerText = "LOCK REAL PLP!";
+        return;
+      }
+
+      const weiAmount = web3.utils.toWei(amount.toString(), 'ether');
+      document.getElementById('status').innerText = "LOCKING & LOADING...";
+
+      try {
+        const firstMonth = await powerStakeContract.methods.firstMonthInitialized().call();
+        if (!firstMonth) {
+          document.getElementById('status').innerText = "FIRST MONTH UNLOCKED! FORCE INIT WITH 1000 PWR!";
+          return;
+        }
+
+        const tx = await powerStakeContract.methods.stakePLP(weiAmount, durationIndex).send({ from: account });
+        document.getElementById('status').innerText = `STAKE DOMINATED! TX HASH: ${tx.transactionHash}`;
+        await updateDashboard();
+      } catch (error) {
+        document.getElementById('status').innerText = `STAKE FAILED: ${String(error.message || error)}`;
+        console.error(error);
+      }
+    }
+  </script>
+</body>
+</html>
